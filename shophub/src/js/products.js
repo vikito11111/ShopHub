@@ -53,3 +53,67 @@ export async function getActiveProducts({ search = '', categoryId = '' } = {}) {
     return { data: [], error }
   }
 }
+
+export async function getProductById(productId) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, seller_id, category_id, title, description, price, image_url, status, created_at')
+      .eq('id', productId)
+      .single()
+
+    if (error) throw error
+
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+export async function getProfileById(profileId) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .eq('id', profileId)
+      .single()
+
+    if (error) throw error
+
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+export async function createOrder({ buyerId, productId }) {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({ buyer_id: buyerId, product_id: productId })
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+export async function deleteOwnProduct(productId, sellerId) {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ status: 'deleted' })
+      .eq('id', productId)
+      .eq('seller_id', sellerId)
+
+    if (error) throw error
+
+    return { error: null }
+  } catch (error) {
+    return { error }
+  }
+}

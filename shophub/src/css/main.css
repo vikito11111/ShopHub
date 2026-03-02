@@ -24,6 +24,18 @@ main {
   background-color: #fff;
 }
 
+.product-detail-image {
+  min-height: 320px;
+  max-height: 560px;
+  object-fit: cover;
+}
+
+@media (max-width: 991.98px) {
+  .product-detail-image {
+    max-height: 360px;
+  }
+}
+
 .footer-text {
   font-size: 0.95rem;
 }
