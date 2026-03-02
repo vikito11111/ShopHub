@@ -1,0 +1,20 @@
+body {
+  background-color: #f8f9fa;
+}
+
+main {
+  min-height: calc(100vh - 140px);
+}
+
+.home-hero {
+  border-radius: 1rem;
+}
+
+.home-product-card img {
+  height: 180px;
+  object-fit: cover;
+}
+
+.footer-text {
+  font-size: 0.95rem;
+}

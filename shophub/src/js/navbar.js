@@ -15,9 +15,9 @@ function renderNavLinks() {
   return navItems
     .map((item) => {
       const isActive = currentPage === item.href.replace('./', '')
-      return `<a href="${item.href}"${isActive ? ' aria-current="page"' : ''}>${item.label}</a>`
+      return `<li class="nav-item"><a class="nav-link${isActive ? ' active' : ''}" href="${item.href}"${isActive ? ' aria-current="page"' : ''}>${item.label}</a></li>`
     })
-    .join(' ')
+    .join('')
 }
 
 async function getCurrentUser() {
@@ -38,15 +38,30 @@ async function renderNavbar() {
   const user = await getCurrentUser()
 
   const authLinks = user
-    ? `<button id="logout-btn" type="button">Logout</button>`
-    : '<a href="./login.html">Login</a> <a href="./register.html">Register</a>'
+    ? `<button id="logout-btn" type="button" class="btn btn-outline-light btn-sm">Logout</button>`
+    : '<a href="./login.html" class="btn btn-outline-light btn-sm">Login</a> <a href="./register.html" class="btn btn-light btn-sm">Register</a>'
 
   root.innerHTML = `
-    <header>
-      <nav>
-        <a href="./index.html">ShopHub</a>
-        <div>${renderNavLinks()}</div>
-        <div>${authLinks}</div>
+    <header class="sticky-top">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+          <a class="navbar-brand fw-semibold" href="./index.html">ShopHub</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mainNav"
+            aria-controls="mainNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">${renderNavLinks()}</ul>
+            <div class="d-flex gap-2">${authLinks}</div>
+          </div>
+        </div>
       </nav>
     </header>
   `

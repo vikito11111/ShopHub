@@ -5,8 +5,10 @@ function renderFooter() {
   const year = new Date().getFullYear()
 
   root.innerHTML = `
-    <footer>
-      <p>© ${year} ShopHub. All rights reserved.</p>
+    <footer class="border-top bg-white py-4 mt-5">
+      <div class="container text-center text-secondary footer-text">
+        <p class="mb-0">© ${year} ShopHub. All rights reserved.</p>
+      </div>
     </footer>
   `
 }
