@@ -54,6 +54,16 @@ main {
   min-width: 140px;
 }
 
+.admin-stat-card {
+  border-radius: 0.75rem;
+}
+
+.admin-product-thumb {
+  width: 88px;
+  height: 56px;
+  object-fit: cover;
+}
+
 @media (max-width: 991.98px) {
   .product-detail-image {
     max-height: 360px;
