@@ -15,3 +15,19 @@ export async function uploadProductImage(file) {
     return { data: null, error }
   }
 }
+
+export async function uploadAvatarImage(file) {
+  try {
+    const fileName = `avatars/${Date.now()}-${file.name}`
+    const { error } = await supabase.storage.from('product-images').upload(fileName, file)
+    if (error) throw error
+
+    const {
+      data: { publicUrl }
+    } = supabase.storage.from('product-images').getPublicUrl(fileName)
+
+    return { data: { publicUrl }, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}

@@ -151,3 +151,20 @@ export async function updateOwnProduct(productId, sellerId, updateInput) {
     return { data: null, error }
   }
 }
+
+export async function getProductsBySeller(sellerId) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, title, description, price, image_url, status, created_at')
+      .eq('seller_id', sellerId)
+      .neq('status', 'deleted')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return { data: data ?? [], error: null }
+  } catch (error) {
+    return { data: [], error }
+  }
+}
