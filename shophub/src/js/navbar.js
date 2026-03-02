@@ -3,7 +3,6 @@ import { supabase } from './supabase.js'
 const navItems = [
   { label: 'Home', href: './index.html' },
   { label: 'Browse', href: './browse.html' },
-  { label: 'Product', href: './product.html' },
   { label: 'Sell', href: './sell.html' },
   { label: 'Profile', href: './profile.html' },
   { label: 'Admin', href: './admin.html' }
