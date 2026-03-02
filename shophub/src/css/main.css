@@ -15,6 +15,15 @@ main {
   object-fit: cover;
 }
 
+.browse-product-card img {
+  height: 210px;
+  object-fit: cover;
+}
+
+#browse-search-form .input-group-text {
+  background-color: #fff;
+}
+
 .footer-text {
   font-size: 0.95rem;
 }
