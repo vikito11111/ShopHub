@@ -117,3 +117,37 @@ export async function deleteOwnProduct(productId, sellerId) {
     return { error }
   }
 }
+
+export async function createProduct(productInput) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert(productInput)
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+export async function updateOwnProduct(productId, sellerId, updateInput) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update(updateInput)
+      .eq('id', productId)
+      .eq('seller_id', sellerId)
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}

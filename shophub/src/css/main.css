@@ -30,6 +30,11 @@ main {
   object-fit: cover;
 }
 
+.sell-current-image {
+  max-height: 240px;
+  object-fit: cover;
+}
+
 @media (max-width: 991.98px) {
   .product-detail-image {
     max-height: 360px;
