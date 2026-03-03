@@ -18,20 +18,23 @@
   </head>
   <body>
     <div id="navbar-root"></div>
-    <main class="py-4 py-lg-5">
-      <section class="container">
-        <div class="home-hero bg-white border shadow-sm p-4 p-lg-5 mb-4 mb-lg-5">
+    <main class="pb-4 pb-lg-5">
+      <section class="home-hero text-white mb-4 mb-lg-5">
+        <div class="container py-5 py-lg-6">
           <div class="row g-4 align-items-center">
             <div class="col-12 col-lg-7">
-              <span class="badge text-bg-primary mb-3">Marketplace</span>
-              <h1 class="display-6 fw-semibold mb-3">Find great deals on pre-loved products</h1>
-              <p class="text-secondary mb-0">
-                Browse the latest listings from the ShopHub community and discover quality items at fair prices.
+              <span class="badge text-bg-light text-primary mb-3">Marketplace</span>
+              <h1 class="display-5 fw-semibold mb-3">Discover standout deals in your trusted marketplace</h1>
+              <p class="text-white-50 mb-4">
+                Find quality pre-loved products, compare listings in seconds, and shop confidently from verified community sellers.
               </p>
+              <a href="./browse.html" class="btn btn-light btn-lg">
+                <i class="bi bi-compass me-2"></i>Explore Listings
+              </a>
             </div>
             <div class="col-12 col-lg-5">
-              <form id="home-search-form" class="bg-light border rounded-3 p-3 p-md-4">
-                <label for="home-search-input" class="form-label fw-semibold">Search listings</label>
+              <form id="home-search-form" class="home-search-panel border rounded-4 p-3 p-md-4 shadow-sm">
+                <label for="home-search-input" class="form-label fw-semibold text-dark">Search listings</label>
                 <div class="input-group">
                   <input
                     id="home-search-input"
@@ -47,7 +50,9 @@
             </div>
           </div>
         </div>
+      </section>
 
+      <section class="container">
         <section>
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h4 mb-0">Latest Products</h2>

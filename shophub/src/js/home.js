@@ -19,6 +19,7 @@ function escapeHtml(value) {
 
 function productCardTemplate(product) {
   const imageUrl = product.image_url || 'https://placehold.co/800x600?text=ShopHub+Product'
+  const categoryName = product.categories?.name || 'Uncategorized'
 
   return `
     <div class="col-12 col-md-6 col-lg-3">
@@ -30,10 +31,11 @@ function productCardTemplate(product) {
           loading="lazy"
         />
         <div class="card-body d-flex flex-column">
+          <p class="mb-2"><span class="badge rounded-pill text-bg-light border home-category-badge">${escapeHtml(categoryName)}</span></p>
           <h3 class="h6 card-title mb-2">${escapeHtml(product.title)}</h3>
           <p class="text-muted small mb-3">${escapeHtml(truncate(product.description || 'No description provided.', 90))}</p>
           <div class="mt-auto d-flex justify-content-between align-items-center">
-            <span class="fw-semibold">${formatPrice(product.price)}</span>
+            <span class="home-price-chip"><i class="bi bi-tag-fill me-1"></i>${formatPrice(product.price)}</span>
             <a href="./product.html?id=${encodeURIComponent(product.id)}" class="btn btn-sm btn-outline-primary">View</a>
           </div>
         </div>

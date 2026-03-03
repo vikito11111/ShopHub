@@ -11,7 +11,32 @@ main {
 }
 
 .home-hero {
-  border-radius: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--bs-primary-rgb), 1) 0%,
+    rgba(var(--bs-info-rgb), 0.9) 45%,
+    rgba(var(--bs-dark-rgb), 1) 100%
+  );
+}
+
+.home-search-panel {
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(4px);
+}
+
+.home-category-badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+}
+
+.home-price-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--bs-primary-text-emphasis);
+  background-color: var(--bs-primary-bg-subtle);
 }
 
 .home-product-card img {
@@ -19,9 +44,68 @@ main {
   object-fit: cover;
 }
 
+.home-product-card {
+  border-radius: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--bs-box-shadow) !important;
+}
+
 .browse-product-card img {
   height: 210px;
   object-fit: cover;
+}
+
+.browse-product-card {
+  border-radius: 0.9rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.browse-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bs-box-shadow) !important;
+}
+
+.browse-filter-bar {
+  position: sticky;
+  top: 78px;
+  z-index: 10;
+}
+
+#browse-category-pills .btn {
+  border-width: 1px;
+  white-space: nowrap;
+}
+
+#browse-category-pills .btn.active {
+  color: #fff;
+}
+
+.browse-category-rail {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.browse-category-rail::-webkit-scrollbar {
+  height: 6px;
+}
+
+.browse-category-rail::-webkit-scrollbar-thumb {
+  background: rgba(var(--bs-secondary-rgb), 0.45);
+  border-radius: 999px;
+}
+
+.browse-skeleton-card {
+  border-radius: 0.9rem;
+}
+
+.browse-skeleton-image {
+  height: 210px;
 }
 
 #browse-search-form .input-group-text {
@@ -37,6 +121,26 @@ main {
 .sell-current-image {
   max-height: 240px;
   object-fit: cover;
+}
+
+.sell-step-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--bs-emphasis-color);
+}
+
+.sell-step-index {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--bs-white);
+  background-color: var(--bs-primary);
 }
 
 .profile-avatar {
@@ -120,6 +224,58 @@ main {
 
 .admin-stat-card {
   border-radius: 0.75rem;
+}
+
+.admin-stat-users {
+  background: linear-gradient(180deg, #f8f9ff 0%, #ffffff 100%);
+}
+
+.admin-stat-products {
+  background: linear-gradient(180deg, #f5fff8 0%, #ffffff 100%);
+}
+
+.admin-stat-orders {
+  background: linear-gradient(180deg, #fffaf2 0%, #ffffff 100%);
+}
+
+.admin-table-card {
+  border-radius: 1rem;
+}
+
+.admin-table thead th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.admin-table tbody tr {
+  vertical-align: middle;
+}
+
+.admin-price-badge {
+  font-weight: 600;
+}
+
+.admin-role-control {
+  min-width: 240px;
+}
+
+.admin-role-select {
+  width: 170px;
+}
+
+.admin-role-badge-wrap {
+  width: 72px;
+  display: inline-flex;
+  justify-content: flex-start;
+}
+
+.admin-role-badge {
+  margin-left: -2px;
+}
+
+.admin-table .badge {
+  font-weight: 600;
 }
 
 .admin-product-thumb {

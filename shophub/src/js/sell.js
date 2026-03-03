@@ -13,6 +13,8 @@ const descriptionInput = document.getElementById('sell-description')
 const priceInput = document.getElementById('sell-price')
 const categoryInput = document.getElementById('sell-category')
 const imageInput = document.getElementById('sell-image')
+const imagePreviewWrap = document.getElementById('sell-image-preview-wrap')
+const imagePreview = document.getElementById('sell-image-preview')
 const currentImageWrap = document.getElementById('current-image-wrap')
 const currentImage = document.getElementById('current-image')
 const alertBox = document.getElementById('sell-alert')
@@ -114,6 +116,22 @@ async function resolveImageUrl() {
   return data.publicUrl
 }
 
+function bindImagePreview() {
+  imageInput.addEventListener('change', () => {
+    const file = imageInput.files?.[0]
+
+    if (!file) {
+      imagePreviewWrap.classList.add('d-none')
+      imagePreview.removeAttribute('src')
+      return
+    }
+
+    const previewUrl = URL.createObjectURL(file)
+    imagePreview.src = previewUrl
+    imagePreviewWrap.classList.remove('d-none')
+  })
+}
+
 async function handleSubmit(event) {
   event.preventDefault()
 
@@ -167,5 +185,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadCategories()
   await loadEditModeData()
 
+  bindImagePreview()
   form.addEventListener('submit', handleSubmit)
 })

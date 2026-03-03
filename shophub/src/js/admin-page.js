@@ -44,6 +44,12 @@ function shortId(value) {
 
 function productRowTemplate(product) {
   const image = product.image_url || 'https://placehold.co/120x80?text=Product'
+  const statusClass =
+    product.status === 'active'
+      ? 'text-bg-success-subtle text-success-emphasis border border-success-subtle'
+      : product.status === 'sold'
+        ? 'text-bg-warning-subtle text-warning-emphasis border border-warning-subtle'
+        : 'text-bg-secondary text-white'
 
   return `
     <tr>
@@ -51,12 +57,12 @@ function productRowTemplate(product) {
         <img src="${image}" alt="${product.title}" class="admin-product-thumb rounded" />
       </td>
       <td>${product.title}</td>
-      <td>${formatPrice(product.price)}</td>
-      <td><span class="badge text-bg-secondary text-uppercase">${product.status}</span></td>
+      <td><span class="badge text-bg-light border admin-price-badge">${formatPrice(product.price)}</span></td>
+      <td><span class="badge ${statusClass} text-uppercase">${product.status}</span></td>
       <td><span class="text-muted">${shortId(product.seller_id)}</span></td>
       <td class="text-end">
         <button class="btn btn-sm btn-outline-danger js-admin-delete-product" data-product-id="${product.id}">
-          Delete
+          <i class="bi bi-trash me-1"></i>Delete
         </button>
       </td>
     </tr>
@@ -64,15 +70,22 @@ function productRowTemplate(product) {
 }
 
 function userRowTemplate(user) {
+  const roleBadgeClass = 'text-bg-secondary text-white'
+
   return `
     <tr>
       <td>${user.username}</td>
       <td><span class="text-muted">${shortId(user.id)}</span></td>
       <td>
-        <select class="form-select form-select-sm js-admin-role" data-user-id="${user.id}">
-          <option value="user"${user.role === 'user' ? ' selected' : ''}>user</option>
-          <option value="admin"${user.role === 'admin' ? ' selected' : ''}>admin</option>
-        </select>
+        <div class="d-flex align-items-center gap-2 admin-role-control">
+          <span class="admin-role-badge-wrap">
+            <span class="badge ${roleBadgeClass} text-uppercase admin-role-badge">${user.role}</span>
+          </span>
+          <select class="form-select form-select-sm js-admin-role admin-role-select" data-user-id="${user.id}">
+            <option value="user"${user.role === 'user' ? ' selected' : ''}>user</option>
+            <option value="admin"${user.role === 'admin' ? ' selected' : ''}>admin</option>
+          </select>
+        </div>
       </td>
       <td class="text-end">
         <button
@@ -80,7 +93,7 @@ function userRowTemplate(user) {
           data-user-id="${user.id}"
           ${user.id === currentUserId ? 'disabled' : ''}
         >
-          Save
+          <i class="bi bi-check2-circle me-1"></i>Save
         </button>
       </td>
     </tr>

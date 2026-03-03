@@ -5,11 +5,16 @@ const searchParams = new URLSearchParams(window.location.search)
 
 const searchForm = document.getElementById('browse-search-form')
 const searchInput = document.getElementById('browse-search-input')
+const categorySearchInput = document.getElementById('browse-category-search')
 const categorySelect = document.getElementById('browse-category-select')
+const categoryPills = document.getElementById('browse-category-pills')
 const productGrid = document.getElementById('browse-products-grid')
 const loadingState = document.getElementById('browse-products-loading')
 const emptyState = document.getElementById('browse-products-empty')
 const errorState = document.getElementById('browse-products-error')
+const resultsCount = document.getElementById('browse-results-count')
+
+let allCategories = []
 
 function escapeHtml(value) {
   return String(value)
@@ -45,6 +50,44 @@ function productCardTemplate(product) {
   `
 }
 
+function updateResultsCount(count) {
+  if (!resultsCount) return
+  const label = count === 1 ? 'result' : 'results'
+  resultsCount.textContent = `${count} ${label}`
+}
+
+function setActiveCategoryPill(categoryId) {
+  if (!categoryPills) return
+
+  categoryPills.querySelectorAll('[data-category]').forEach((button) => {
+    const isActive = button.getAttribute('data-category') === categoryId
+    button.classList.toggle('active', isActive)
+    button.classList.toggle('btn-primary', isActive)
+    button.classList.toggle('btn-outline-secondary', !isActive)
+  })
+}
+
+function renderCategoryPills(filterValue = '') {
+  if (!categoryPills) return
+
+  const normalizedFilter = filterValue.trim().toLowerCase()
+
+  const filteredCategories = allCategories.filter((category) =>
+    category.name.toLowerCase().includes(normalizedFilter)
+  )
+
+  const pills = [
+    '<button type="button" class="btn btn-sm rounded-pill btn-outline-secondary" data-category="">All categories</button>',
+    ...filteredCategories.map(
+      (category) =>
+        `<button type="button" class="btn btn-sm rounded-pill btn-outline-secondary" data-category="${category.id}">${escapeHtml(category.name)}</button>`
+    )
+  ]
+
+  categoryPills.innerHTML = pills.join('')
+  setActiveCategoryPill(categorySelect.value)
+}
+
 function updateUrl(search, category) {
   const params = new URLSearchParams()
   if (search) params.set('search', search)
@@ -59,9 +102,11 @@ async function loadCategories() {
   const { data, error } = await getCategories()
   if (error) return
 
+  allCategories = data ?? []
+
   const options = ['<option value="">All categories</option>']
   options.push(
-    ...data.map((category) => `<option value="${category.id}">${escapeHtml(category.name)}</option>`)
+    ...allCategories.map((category) => `<option value="${category.id}">${escapeHtml(category.name)}</option>`)
   )
 
   categorySelect.innerHTML = options.join('')
@@ -70,6 +115,8 @@ async function loadCategories() {
   if (selectedCategory) {
     categorySelect.value = selectedCategory
   }
+
+  renderCategoryPills()
 }
 
 async function loadProducts() {
@@ -90,15 +137,18 @@ async function loadProducts() {
   if (error) {
     setVisibility(errorState, true)
     productGrid.innerHTML = ''
+    updateResultsCount(0)
     return
   }
 
   if (!data.length) {
     setVisibility(emptyState, true)
     productGrid.innerHTML = ''
+    updateResultsCount(0)
     return
   }
 
+  updateResultsCount(data.length)
   productGrid.innerHTML = data.map(productCardTemplate).join('')
 }
 
@@ -109,12 +159,23 @@ function initializeFilters() {
   searchForm.addEventListener('submit', async (event) => {
     event.preventDefault()
     updateUrl(searchInput.value.trim(), categorySelect.value)
+    setActiveCategoryPill(categorySelect.value)
     await loadProducts()
   })
 
-  categorySelect.addEventListener('change', async () => {
-    updateUrl(searchInput.value.trim(), categorySelect.value)
+  categoryPills?.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-category]')
+    if (!button) return
+
+    const value = button.getAttribute('data-category') || ''
+    categorySelect.value = value
+    setActiveCategoryPill(value)
+    updateUrl(searchInput.value.trim(), value)
     await loadProducts()
+  })
+
+  categorySearchInput?.addEventListener('input', () => {
+    renderCategoryPills(categorySearchInput.value)
   })
 }
 

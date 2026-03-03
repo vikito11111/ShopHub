@@ -4,7 +4,7 @@ export async function getLatestProducts(limit = 8) {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, title, description, price, image_url, created_at')
+      .select('id, title, description, price, image_url, created_at, categories(name)')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(limit)

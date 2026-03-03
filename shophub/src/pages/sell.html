@@ -21,9 +21,9 @@
     <main class="py-4 py-lg-5">
       <section class="container">
         <div class="row justify-content-center">
-          <div class="col-12 col-lg-9 col-xl-8">
+          <div class="col-12 col-lg-10 col-xl-8">
             <div class="bg-white border shadow-sm rounded-4 p-4 p-lg-5">
-              <h1 id="sell-page-title" class="h3 mb-2">Create Listing</h1>
+              <h1 id="sell-page-title" class="h3 mb-2"><i class="bi bi-pencil-square me-2"></i>Create Listing</h1>
               <p id="sell-page-subtitle" class="text-secondary mb-4">
                 Add your product details to publish a new listing.
               </p>
@@ -32,12 +32,15 @@
 
               <form id="sell-form" class="row g-3">
                 <div class="col-12">
-                  <label for="sell-title" class="form-label">Title</label>
+                  <div class="sell-step-header"><span class="sell-step-index">1</span>Basic details</div>
+                </div>
+                <div class="col-12">
+                  <label for="sell-title" class="form-label"><i class="bi bi-type me-1"></i>Title</label>
                   <input id="sell-title" type="text" class="form-control" maxlength="120" required />
                 </div>
 
                 <div class="col-12">
-                  <label for="sell-description" class="form-label">Description</label>
+                  <label for="sell-description" class="form-label"><i class="bi bi-card-text me-1"></i>Description</label>
                   <textarea
                     id="sell-description"
                     class="form-control"
@@ -47,8 +50,14 @@
                   ></textarea>
                 </div>
 
+                <div class="col-12"><hr class="my-2" /></div>
+
+                <div class="col-12">
+                  <div class="sell-step-header"><span class="sell-step-index">2</span>Pricing & category</div>
+                </div>
+
                 <div class="col-12 col-md-6">
-                  <label for="sell-price" class="form-label">Price (USD)</label>
+                  <label for="sell-price" class="form-label"><i class="bi bi-cash-stack me-1"></i>Price (USD)</label>
                   <input
                     id="sell-price"
                     type="number"
@@ -60,15 +69,26 @@
                 </div>
 
                 <div class="col-12 col-md-6">
-                  <label for="sell-category" class="form-label">Category</label>
+                  <label for="sell-category" class="form-label"><i class="bi bi-grid me-1"></i>Category</label>
                   <select id="sell-category" class="form-select" required>
                     <option value="" selected disabled>Select a category</option>
                   </select>
                 </div>
 
+                <div class="col-12"><hr class="my-2" /></div>
+
                 <div class="col-12">
-                  <label for="sell-image" class="form-label">Product image</label>
+                  <div class="sell-step-header"><span class="sell-step-index">3</span>Product image</div>
+                </div>
+
+                <div class="col-12">
+                  <label for="sell-image" class="form-label"><i class="bi bi-image me-1"></i>Product image</label>
                   <input id="sell-image" type="file" class="form-control" accept="image/*" />
+                </div>
+
+                <div id="sell-image-preview-wrap" class="col-12 d-none">
+                  <p class="small text-secondary mb-2">Selected image preview</p>
+                  <img id="sell-image-preview" src="" alt="Selected preview" class="img-fluid rounded sell-current-image" />
                 </div>
 
                 <div id="current-image-wrap" class="col-12 d-none">
