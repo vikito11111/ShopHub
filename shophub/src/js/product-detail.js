@@ -4,12 +4,13 @@ import {
   createProductReview,
   deleteOwnProduct,
   getProductById,
+  getRelatedProducts,
   getProductReviews,
   getProfileById,
   hasUserPurchasedProduct,
   hasUserReviewedProduct
 } from './products.js'
-import { formatPrice } from './utils.js'
+import { formatPrice, truncate } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
 const productId = params.get('id')
@@ -45,6 +46,8 @@ const reviewEligibilityMessage = document.getElementById('review-eligibility-mes
 const reviewsLoading = document.getElementById('reviews-loading')
 const reviewsEmpty = document.getElementById('reviews-empty')
 const reviewsList = document.getElementById('reviews-list')
+const relatedProductsSection = document.getElementById('related-products-section')
+const relatedProductsGrid = document.getElementById('related-products-grid')
 
 let pageProduct = null
 let currentUser = null
@@ -72,6 +75,50 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;')
+}
+
+function relatedProductCardTemplate(product) {
+  const imageUrl = product.image_url || 'https://placehold.co/800x600?text=ShopHub+Product'
+
+  return `
+    <div class="col-12 col-md-6 col-lg-3">
+      <article class="card h-100 border-0 shadow-sm home-product-card">
+        <img src="${escapeHtml(imageUrl)}" class="card-img-top" alt="${escapeHtml(product.title)}" loading="lazy" />
+        <div class="card-body d-flex flex-column">
+          <h3 class="h6 card-title mb-2">${escapeHtml(product.title)}</h3>
+          <p class="text-muted small mb-3">${escapeHtml(truncate(product.description || 'No description provided.', 90))}</p>
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <span class="home-price-chip"><i class="bi bi-tag-fill me-1"></i>${formatPrice(product.price)}</span>
+            <a href="./product.html?id=${encodeURIComponent(product.id)}" class="btn btn-sm btn-outline-primary">View</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  `
+}
+
+async function loadRelatedProducts() {
+  if (!pageProduct || !relatedProductsSection || !relatedProductsGrid) return
+
+  if (!pageProduct.category_id) {
+    setVisibility(relatedProductsSection, false)
+    return
+  }
+
+  const { data, error } = await getRelatedProducts({
+    productId: pageProduct.id,
+    categoryId: pageProduct.category_id,
+    limit: 4
+  })
+
+  if (error || !data.length) {
+    relatedProductsGrid.innerHTML = ''
+    setVisibility(relatedProductsSection, false)
+    return
+  }
+
+  relatedProductsGrid.innerHTML = data.map(relatedProductCardTemplate).join('')
+  setVisibility(relatedProductsSection, true)
 }
 
 function formatDate(value) {
@@ -394,7 +441,7 @@ async function initializeProductPage() {
   renderProduct(product, seller?.username)
   await setupBuyerActions(currentUser, product)
   await setupSellerActions(currentUser, product)
-  await Promise.all([loadAndRenderReviews(), setupReviewEligibility()])
+  await Promise.all([loadAndRenderReviews(), setupReviewEligibility(), loadRelatedProducts()])
 
   setVisibility(loadingState, false)
   setVisibility(errorState, false)

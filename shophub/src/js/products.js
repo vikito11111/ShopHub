@@ -258,3 +258,22 @@ export async function createProductReview({ productId, reviewerId, rating, comme
     return { data: null, error }
   }
 }
+
+export async function getRelatedProducts({ productId, categoryId, limit = 4 }) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, title, description, price, image_url, created_at')
+      .eq('category_id', categoryId)
+      .eq('status', 'active')
+      .neq('id', productId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+
+    return { data: data ?? [], error: null }
+  } catch (error) {
+    return { data: [], error }
+  }
+}
