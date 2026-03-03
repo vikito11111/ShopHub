@@ -2,14 +2,13 @@ import { supabase } from './supabase.js'
 import { deleteOwnProduct, getProductsBySeller, markOwnProductAsSold } from './products.js'
 import { getProfileByUserId, updateOwnProfileAvatar } from './profiles.js'
 import { uploadAvatarImage } from './storage.js'
-import { formatPrice, truncate } from './utils.js'
+import { formatPrice, showToast, truncate } from './utils.js'
 
 const avatarImage = document.getElementById('profile-avatar')
 const usernameLabel = document.getElementById('profile-username')
 const avatarInput = document.getElementById('profile-avatar-input')
 const avatarButton = document.getElementById('profile-avatar-btn')
 const avatarSpinner = document.getElementById('profile-avatar-spinner')
-const profileAlert = document.getElementById('profile-alert')
 
 const productsLoading = document.getElementById('profile-products-loading')
 const productsError = document.getElementById('profile-products-error')
@@ -33,13 +32,6 @@ const salesStat = document.getElementById('profile-stat-sales')
 const memberSinceStat = document.getElementById('profile-stat-member-since')
 
 let currentUser = null
-
-function showAlert(type, message) {
-  profileAlert.className = `alert alert-${type}`
-  profileAlert.textContent = message
-  profileAlert.classList.remove('d-none')
-  window.setTimeout(() => profileAlert.classList.add('d-none'), 3000)
-}
 
 function setVisible(element, visible) {
   if (!element) return
@@ -116,7 +108,7 @@ async function requireUser() {
 async function loadProfile() {
   const { data, error } = await getProfileByUserId(currentUser.id)
   if (error || !data) {
-    showAlert('danger', 'Could not load profile details.')
+    showToast('Could not load profile details.', 'error')
     return
   }
 
@@ -285,11 +277,11 @@ function bindDeleteEvents() {
 
       const { error } = await deleteOwnProduct(productId, currentUser.id)
       if (error) {
-        showAlert('danger', 'Could not delete listing. Please try again.')
+        showToast('Could not delete listing. Please try again.', 'error')
         return
       }
 
-      showAlert('success', 'Listing deleted.')
+      showToast('Listing deleted.', 'success')
       await loadProducts()
       bindDeleteEvents()
     })
@@ -304,11 +296,11 @@ function bindMarkSoldEvents() {
 
       const { error } = await markOwnProductAsSold(productId, currentUser.id)
       if (error) {
-        showAlert('danger', 'Could not mark listing as sold. Please try again.')
+        showToast('Could not mark listing as sold. Please try again.', 'error')
         return
       }
 
-      showAlert('success', 'Listing marked as sold.')
+      showToast('Listing marked as sold.', 'success')
       await loadProducts()
       bindDeleteEvents()
       bindMarkSoldEvents()
@@ -320,7 +312,7 @@ function bindAvatarUpload() {
   avatarButton.addEventListener('click', async () => {
     const file = avatarInput.files?.[0]
     if (!file) {
-      showAlert('warning', 'Please choose an image first.')
+      showToast('Please choose an image first.', 'info')
       return
     }
 
@@ -331,7 +323,7 @@ function bindAvatarUpload() {
     if (uploadError || !uploadData?.publicUrl) {
       avatarButton.disabled = false
       avatarSpinner.classList.add('d-none')
-      showAlert('danger', 'Could not upload avatar. Please try again.')
+      showToast('Could not upload avatar. Please try again.', 'error')
       return
     }
 
@@ -344,12 +336,12 @@ function bindAvatarUpload() {
     avatarSpinner.classList.add('d-none')
 
     if (profileError || !profileData) {
-      showAlert('danger', 'Could not save avatar. Please try again.')
+      showToast('Could not save avatar. Please try again.', 'error')
       return
     }
 
     avatarImage.src = profileData.avatar_url || uploadData.publicUrl
-    showAlert('success', 'Avatar updated successfully.')
+    showToast('Avatar updated successfully.', 'success')
   })
 }
 

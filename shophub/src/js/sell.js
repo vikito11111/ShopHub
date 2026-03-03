@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js'
 import { createProduct, getCategories, getProductById, updateOwnProduct } from './products.js'
 import { uploadProductImage } from './storage.js'
+import { showToast } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
 const editProductId = params.get('id')
@@ -18,23 +19,12 @@ const imagePreviewWrap = document.getElementById('sell-image-preview-wrap')
 const imagePreview = document.getElementById('sell-image-preview')
 const currentImageWrap = document.getElementById('current-image-wrap')
 const currentImage = document.getElementById('current-image')
-const alertBox = document.getElementById('sell-alert')
 const submitButton = document.getElementById('sell-submit-btn')
 const submitButtonText = document.getElementById('sell-submit-text')
 const submitSpinner = document.getElementById('sell-submit-spinner')
 
 let currentUser = null
 let existingImageUrl = ''
-
-function showAlert(type, message) {
-  alertBox.className = `alert alert-${type}`
-  alertBox.textContent = message
-  alertBox.classList.remove('d-none')
-
-  window.setTimeout(() => {
-    alertBox.classList.add('d-none')
-  }, 3000)
-}
 
 function setSubmitting(submitting) {
   submitButton.disabled = submitting
@@ -64,7 +54,7 @@ async function requireAuthUser() {
 async function loadCategories() {
   const { data, error } = await getCategories()
   if (error) {
-    showAlert('danger', 'Could not load categories. Please refresh the page.')
+    showToast('Could not load categories. Please refresh the page.', 'error')
     return
   }
 
@@ -82,13 +72,13 @@ async function loadEditModeData() {
 
   const { data: product, error } = await getProductById(editProductId)
   if (error || !product) {
-    showAlert('danger', 'Listing not found.')
+    showToast('Listing not found.', 'error')
     window.location.href = './profile.html'
     return
   }
 
   if (product.seller_id !== currentUser.id) {
-    showAlert('danger', 'You can only edit your own listings.')
+    showToast('You can only edit your own listings.', 'error')
     window.location.href = './profile.html'
     return
   }
@@ -151,7 +141,7 @@ async function handleSubmit(event) {
     !Number.isInteger(quantity) ||
     quantity < 1
   ) {
-    showAlert('danger', 'Please fill in all required fields with valid values.')
+    showToast('Please fill in all required fields with valid values.', 'error')
     return
   }
 
@@ -183,7 +173,7 @@ async function handleSubmit(event) {
 
     window.location.href = './profile.html'
   } catch (error) {
-    showAlert('danger', 'Could not save listing. Please try again.')
+    showToast('Could not save listing. Please try again.', 'error')
   } finally {
     setSubmitting(false)
   }

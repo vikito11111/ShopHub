@@ -7,9 +7,7 @@ import {
   getProfileRole,
   updateUserRole
 } from './admin.js'
-import { formatPrice } from './utils.js'
-
-const alertBox = document.getElementById('admin-alert')
+import { formatPrice, showToast } from './utils.js'
 const loadingState = document.getElementById('admin-loading')
 const contentWrap = document.getElementById('admin-content')
 
@@ -21,16 +19,6 @@ const usersTableBody = document.getElementById('admin-users-table-body')
 const productsTableBody = document.getElementById('admin-products-table-body')
 
 let currentUserId = ''
-
-function showAlert(type, message) {
-  alertBox.className = `alert alert-${type}`
-  alertBox.textContent = message
-  alertBox.classList.remove('d-none')
-
-  window.setTimeout(() => {
-    alertBox.classList.add('d-none')
-  }, 3000)
-}
 
 function setVisible(element, visible) {
   if (!element) return
@@ -112,11 +100,11 @@ function bindRoleEvents() {
       const role = roleSelect.value
       const { error } = await updateUserRole(userId, role)
       if (error) {
-        showAlert('danger', 'Could not update user role.')
+        showToast('Could not update user role.', 'error')
         return
       }
 
-      showAlert('success', 'User role updated.')
+      showToast('User role updated.', 'success')
       await loadUsers()
     })
   })
@@ -133,11 +121,11 @@ function bindProductEvents() {
 
       const { error } = await deleteProductAsAdmin(productId)
       if (error) {
-        showAlert('danger', 'Could not delete product.')
+        showToast('Could not delete product.', 'error')
         return
       }
 
-      showAlert('success', 'Product deleted.')
+      showToast('Product deleted.', 'success')
       await loadProducts()
       await loadStats()
     })
@@ -147,7 +135,7 @@ function bindProductEvents() {
 async function loadStats() {
   const { data, error } = await getAdminStats()
   if (error || !data) {
-    showAlert('danger', 'Could not load admin stats.')
+    showToast('Could not load admin stats.', 'error')
     return
   }
 

@@ -1,11 +1,11 @@
 import { loginWithEmail } from './auth.js'
+import { showToast } from './utils.js'
 
 const form = document.getElementById('login-form')
 const emailInput = document.getElementById('login-email')
 const passwordInput = document.getElementById('login-password')
 const emailError = document.getElementById('login-email-error')
 const passwordError = document.getElementById('login-password-error')
-const formError = document.getElementById('login-form-error')
 const submitButton = document.getElementById('login-submit-btn')
 const submitText = document.getElementById('login-submit-text')
 const submitSpinner = document.getElementById('login-submit-spinner')
@@ -17,8 +17,6 @@ function setFieldError(element, message) {
 function clearErrors() {
   setFieldError(emailError, '')
   setFieldError(passwordError, '')
-  formError.classList.add('d-none')
-  formError.textContent = ''
 }
 
 function setSubmitting(submitting) {
@@ -62,8 +60,7 @@ async function handleSubmit(event) {
   const { error } = await loginWithEmail(email, password)
 
   if (error) {
-    formError.textContent = error.message || 'Could not sign in. Please check your credentials.'
-    formError.classList.remove('d-none')
+    showToast(error.message || 'Could not sign in. Please check your credentials.', 'error')
     setSubmitting(false)
     return
   }

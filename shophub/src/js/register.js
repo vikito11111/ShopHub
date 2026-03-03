@@ -1,4 +1,5 @@
 import { registerWithEmail } from './auth.js'
+import { showToast } from './utils.js'
 
 const form = document.getElementById('register-form')
 const emailInput = document.getElementById('register-email')
@@ -7,7 +8,6 @@ const confirmPasswordInput = document.getElementById('register-confirm-password'
 const emailError = document.getElementById('register-email-error')
 const passwordError = document.getElementById('register-password-error')
 const confirmPasswordError = document.getElementById('register-confirm-password-error')
-const formError = document.getElementById('register-form-error')
 const submitButton = document.getElementById('register-submit-btn')
 const submitText = document.getElementById('register-submit-text')
 const submitSpinner = document.getElementById('register-submit-spinner')
@@ -20,8 +20,6 @@ function clearErrors() {
   setFieldError(emailError, '')
   setFieldError(passwordError, '')
   setFieldError(confirmPasswordError, '')
-  formError.classList.add('d-none')
-  formError.textContent = ''
 }
 
 function setSubmitting(submitting) {
@@ -77,8 +75,7 @@ async function handleSubmit(event) {
   const { error } = await registerWithEmail(email, password)
 
   if (error) {
-    formError.textContent = error.message || 'Could not create account. Please try again.'
-    formError.classList.remove('d-none')
+    showToast(error.message || 'Could not create account. Please try again.', 'error')
     setSubmitting(false)
     return
   }

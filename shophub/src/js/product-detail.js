@@ -10,7 +10,7 @@ import {
   hasUserPurchasedProduct,
   hasUserReviewedProduct
 } from './products.js'
-import { formatPrice, truncate } from './utils.js'
+import { formatPrice, showToast, truncate } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
 const productId = params.get('id')
@@ -32,7 +32,6 @@ const soldMessage = document.getElementById('sold-message')
 const sellerActions = document.getElementById('seller-actions')
 const editBtn = document.getElementById('edit-product-btn')
 const deleteBtn = document.getElementById('delete-product-btn')
-const productAlert = document.getElementById('product-alert')
 
 const reviewsSection = document.getElementById('product-reviews-section')
 const reviewFormWrap = document.getElementById('review-form-wrap')
@@ -52,16 +51,6 @@ const relatedProductsGrid = document.getElementById('related-products-grid')
 let pageProduct = null
 let currentUser = null
 let imageLightbox = null
-
-function showAlert(type, message) {
-  productAlert.className = `alert alert-${type}`
-  productAlert.textContent = message
-  productAlert.classList.remove('d-none')
-
-  window.setTimeout(() => {
-    productAlert.classList.add('d-none')
-  }, 3000)
-}
 
 function setVisibility(element, visible) {
   if (!element) return
@@ -213,7 +202,7 @@ async function loadAndRenderReviews() {
   setVisibility(reviewsLoading, false)
 
   if (error) {
-    showAlert('danger', 'Could not load reviews right now.')
+    showToast('Could not load reviews right now.', 'error')
     renderAverageRating([])
     return
   }
@@ -296,12 +285,12 @@ function bindReviewSubmit() {
     const comment = reviewComment?.value.trim() || ''
 
     if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-      showAlert('warning', 'Please choose a rating from 1 to 5 stars.')
+      showToast('Please choose a rating from 1 to 5 stars.', 'info')
       return
     }
 
     if (!comment) {
-      showAlert('warning', 'Please enter a review comment.')
+      showToast('Please enter a review comment.', 'info')
       return
     }
 
@@ -317,11 +306,11 @@ function bindReviewSubmit() {
     setReviewSubmitting(false)
 
     if (error) {
-      showAlert('danger', 'Could not submit review. You may have already reviewed this product.')
+      showToast('Could not submit review. You may have already reviewed this product.', 'error')
       return
     }
 
-    showAlert('success', 'Review submitted successfully.')
+    showToast('Review submitted successfully.', 'success')
     reviewForm.reset()
     setSelectedRating(0)
 
@@ -332,8 +321,8 @@ function bindReviewSubmit() {
 function showError(message) {
   setVisibility(loadingState, false)
   setVisibility(detailsCard, false)
-  setVisibility(errorState, true)
-  errorState.textContent = message
+  setVisibility(errorState, false)
+  showToast(message, 'error')
 }
 
 async function getCurrentUser() {
@@ -380,12 +369,12 @@ async function setupBuyerActions(currentUser, product) {
     })
 
     if (error) {
-      showAlert('danger', 'Could not complete purchase. Please try again.')
+      showToast('Could not complete purchase. Please try again.', 'error')
       buyNowBtn.disabled = false
       return
     }
 
-    showAlert('success', 'Order created successfully!')
+    showToast('Order created successfully!', 'success')
     const currentQuantity = Number(pageProduct.quantity ?? 0)
     pageProduct.quantity = Math.max(currentQuantity - 1, 0)
 
@@ -410,7 +399,7 @@ async function setupSellerActions(currentUser, product) {
 
     const { error } = await deleteOwnProduct(product.id, currentUser.id)
     if (error) {
-      showAlert('danger', 'Could not delete product. Please try again.')
+      showToast('Could not delete product. Please try again.', 'error')
       return
     }
 
