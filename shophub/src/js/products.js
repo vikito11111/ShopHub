@@ -74,7 +74,7 @@ export async function getProfileById(profileId) {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username')
+      .select('id, username, avatar_url, created_at')
       .eq('id', profileId)
       .single()
 
@@ -83,6 +83,23 @@ export async function getProfileById(profileId) {
     return { data, error: null }
   } catch (error) {
     return { data: null, error }
+  }
+}
+
+export async function getActiveProductsBySeller(sellerId) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, title, description, price, quantity, image_url, status, created_at, categories(name)')
+      .eq('seller_id', sellerId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return { data: data ?? [], error: null }
+  } catch (error) {
+    return { data: [], error }
   }
 }
 

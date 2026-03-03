@@ -8,6 +8,7 @@ export default defineConfig({
         index: resolve(__dirname, 'src/pages/index.html'),
         browse: resolve(__dirname, 'src/pages/browse.html'),
         product: resolve(__dirname, 'src/pages/product.html'),
+        seller: resolve(__dirname, 'src/pages/seller.html'),
         sell: resolve(__dirname, 'src/pages/sell.html'),
         profile: resolve(__dirname, 'src/pages/profile.html'),
         login: resolve(__dirname, 'src/pages/login.html'),

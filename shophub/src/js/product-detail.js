@@ -336,14 +336,16 @@ async function getCurrentUser() {
   }
 }
 
-function renderProduct(product, sellerUsername) {
+function renderProduct(product, seller) {
+  const sellerName = seller?.username || 'Unknown seller'
+
   productImage.src = product.image_url || 'https://placehold.co/1200x900?text=ShopHub+Product'
   productImage.alt = product.title
   productTitle.textContent = product.title
   productDescription.textContent = product.description || 'No description provided.'
   productPrice.textContent = formatPrice(product.price)
   productQuantity.textContent = String(product.quantity ?? 0)
-  productSeller.textContent = sellerUsername || 'Unknown seller'
+  productSeller.innerHTML = `<a href="./seller.html?id=${encodeURIComponent(product.seller_id)}" class="fw-semibold link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">${escapeHtml(sellerName)}</a>`
 }
 
 async function setupBuyerActions(currentUser, product) {
@@ -427,7 +429,7 @@ async function initializeProductPage() {
   pageProduct = product
   currentUser = user
 
-  renderProduct(product, seller?.username)
+  renderProduct(product, seller)
   await setupBuyerActions(currentUser, product)
   await setupSellerActions(currentUser, product)
   await Promise.all([loadAndRenderReviews(), setupReviewEligibility(), loadRelatedProducts()])
