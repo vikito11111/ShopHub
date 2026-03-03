@@ -49,7 +49,7 @@ function productCardTemplate(product) {
     <div class="col-12 col-md-6 col-lg-4">
       <article class="card h-100 border-0 shadow-sm browse-product-card ${isSoldOut ? 'sold-card' : ''}">
         <div class="product-image-wrap">
-          <img src="${escapeHtml(imageUrl)}" class="card-img-top" alt="${escapeHtml(product.title)}" loading="lazy" />
+          <img src="${escapeHtml(imageUrl)}" class="card-img-top browse-product-image" alt="${escapeHtml(product.title)}" loading="lazy" />
           ${isSoldOut ? '<span class="sold-banner">Sold Out</span>' : ''}
         </div>
         <div class="card-body d-flex flex-column">
@@ -64,6 +64,30 @@ function productCardTemplate(product) {
       </article>
     </div>
   `
+}
+
+function buildImageFallback() {
+  return `
+    <div class="browse-image-fallback" role="img" aria-label="Image unavailable">
+      <i class="bi bi-image" aria-hidden="true"></i>
+    </div>
+  `
+}
+
+function bindCardImageFallbacks() {
+  productGrid.querySelectorAll('.browse-product-image').forEach((image) => {
+    image.addEventListener(
+      'error',
+      () => {
+        const wrapper = image.closest('.product-image-wrap')
+        if (!wrapper) return
+
+        image.remove()
+        wrapper.insertAdjacentHTML('afterbegin', buildImageFallback())
+      },
+      { once: true }
+    )
+  })
 }
 
 function updateResultsCount(count) {
@@ -155,6 +179,7 @@ function renderProducts(products) {
   setVisibility(emptyState, false)
   updateResultsCount(sortedProducts.length)
   productGrid.innerHTML = sortedProducts.map(productCardTemplate).join('')
+  bindCardImageFallbacks()
 }
 
 function updateUrl(search, category, sort) {

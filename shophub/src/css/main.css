@@ -134,9 +134,9 @@ main {
 }
 
 .browse-filter-bar {
-  position: sticky;
-  top: 78px;
-  z-index: 10;
+  position: relative;
+  z-index: 1;
+  background-color: var(--bs-white);
 }
 
 #browse-category-pills .btn {
@@ -170,6 +170,19 @@ main {
 
 .browse-skeleton-image {
   height: 210px;
+}
+
+.browse-image-fallback {
+  height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bs-secondary-bg-subtle);
+  color: var(--bs-secondary-color);
+}
+
+.browse-image-fallback i {
+  font-size: 2rem;
 }
 
 #browse-search-form .input-group-text {
