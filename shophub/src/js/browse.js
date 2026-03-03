@@ -1,4 +1,9 @@
-import { getActiveProducts, getCategories } from './products.js'
+import {
+  getActiveProducts,
+  getAverageRatingsByProductIds,
+  getCategories,
+  getPurchaseCountsByProductIds
+} from './products.js'
 import { formatPrice, truncate } from './utils.js'
 
 const searchParams = new URLSearchParams(window.location.search)
@@ -7,6 +12,7 @@ const searchForm = document.getElementById('browse-search-form')
 const searchInput = document.getElementById('browse-search-input')
 const categorySearchInput = document.getElementById('browse-category-search')
 const categorySelect = document.getElementById('browse-category-select')
+const sortSelect = document.getElementById('browse-sort-select')
 const categoryPills = document.getElementById('browse-category-pills')
 const productGrid = document.getElementById('browse-products-grid')
 const loadingState = document.getElementById('browse-products-loading')
@@ -15,6 +21,9 @@ const errorState = document.getElementById('browse-products-error')
 const resultsCount = document.getElementById('browse-results-count')
 
 let allCategories = []
+let currentProducts = []
+let productAverageRatings = {}
+let productPurchaseCounts = {}
 
 function escapeHtml(value) {
   return String(value)
@@ -95,14 +104,90 @@ function renderCategoryPills(filterValue = '') {
   setActiveCategoryPill(categorySelect.value)
 }
 
-function updateUrl(search, category) {
+function sortProducts(products, sortValue) {
+  const list = [...products]
+  const recentComparator =
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+
+  switch (sortValue) {
+    case 'price_asc':
+      return list.sort((a, b) => Number(a.price ?? 0) - Number(b.price ?? 0))
+    case 'price_desc':
+      return list.sort((a, b) => Number(b.price ?? 0) - Number(a.price ?? 0))
+    case 'highest_rated':
+      return list.sort((a, b) => {
+        const ratingA = Number(productAverageRatings[a.id])
+        const ratingB = Number(productAverageRatings[b.id])
+        const hasRatingA = Number.isFinite(ratingA)
+        const hasRatingB = Number.isFinite(ratingB)
+
+        if (hasRatingA && !hasRatingB) return -1
+        if (!hasRatingA && hasRatingB) return 1
+        if (!hasRatingA && !hasRatingB) return recentComparator(a, b)
+
+        if (ratingB !== ratingA) return ratingB - ratingA
+        return recentComparator(a, b)
+      })
+    case 'most_purchased':
+      return list.sort((a, b) => {
+        const purchasesA = Number(productPurchaseCounts[a.id] ?? 0)
+        const purchasesB = Number(productPurchaseCounts[b.id] ?? 0)
+
+        if (purchasesB !== purchasesA) return purchasesB - purchasesA
+        return recentComparator(a, b)
+      })
+    case 'most_recent':
+    default:
+      return list.sort(recentComparator)
+  }
+}
+
+function renderProducts(products) {
+  const sortedProducts = sortProducts(products, sortSelect?.value || 'most_recent')
+
+  if (!sortedProducts.length) {
+    setVisibility(emptyState, true)
+    productGrid.innerHTML = ''
+    updateResultsCount(0)
+    return
+  }
+
+  setVisibility(emptyState, false)
+  updateResultsCount(sortedProducts.length)
+  productGrid.innerHTML = sortedProducts.map(productCardTemplate).join('')
+}
+
+function updateUrl(search, category, sort) {
   const params = new URLSearchParams()
   if (search) params.set('search', search)
   if (category) params.set('category', category)
+  if (sort && sort !== 'most_recent') params.set('sort', sort)
 
   const queryString = params.toString()
   const targetUrl = queryString ? `./browse.html?${queryString}` : './browse.html'
   window.history.replaceState({}, '', targetUrl)
+}
+
+function resetSortMetrics() {
+  productAverageRatings = {}
+  productPurchaseCounts = {}
+}
+
+async function loadSortMetrics(products) {
+  const productIds = products.map((product) => product.id).filter(Boolean)
+
+  if (!productIds.length) {
+    resetSortMetrics()
+    return
+  }
+
+  const [{ data: ratingMap }, { data: purchaseMap }] = await Promise.all([
+    getAverageRatingsByProductIds(productIds),
+    getPurchaseCountsByProductIds(productIds)
+  ])
+
+  productAverageRatings = ratingMap ?? {}
+  productPurchaseCounts = purchaseMap ?? {}
 }
 
 async function loadCategories() {
@@ -143,29 +228,35 @@ async function loadProducts() {
 
   if (error) {
     setVisibility(errorState, true)
+    currentProducts = []
+    resetSortMetrics()
     productGrid.innerHTML = ''
     updateResultsCount(0)
     return
   }
 
-  if (!data.length) {
-    setVisibility(emptyState, true)
-    productGrid.innerHTML = ''
-    updateResultsCount(0)
-    return
-  }
-
-  updateResultsCount(data.length)
-  productGrid.innerHTML = data.map(productCardTemplate).join('')
+  currentProducts = data ?? []
+  await loadSortMetrics(currentProducts)
+  renderProducts(currentProducts)
 }
 
 function initializeFilters() {
   const searchFromUrl = searchParams.get('search') || ''
+  const sortFromUrl = searchParams.get('sort') || 'most_recent'
+
   searchInput.value = searchFromUrl
+
+  if (sortSelect) {
+    sortSelect.value = ['most_recent', 'price_asc', 'price_desc', 'highest_rated', 'most_purchased'].includes(
+      sortFromUrl
+    )
+      ? sortFromUrl
+      : 'most_recent'
+  }
 
   searchForm.addEventListener('submit', async (event) => {
     event.preventDefault()
-    updateUrl(searchInput.value.trim(), categorySelect.value)
+    updateUrl(searchInput.value.trim(), categorySelect.value, sortSelect?.value || 'most_recent')
     setActiveCategoryPill(categorySelect.value)
     await loadProducts()
   })
@@ -177,8 +268,13 @@ function initializeFilters() {
     const value = button.getAttribute('data-category') || ''
     categorySelect.value = value
     setActiveCategoryPill(value)
-    updateUrl(searchInput.value.trim(), value)
+    updateUrl(searchInput.value.trim(), value, sortSelect?.value || 'most_recent')
     await loadProducts()
+  })
+
+  sortSelect?.addEventListener('change', () => {
+    updateUrl(searchInput.value.trim(), categorySelect.value, sortSelect.value)
+    renderProducts(currentProducts)
   })
 
   categorySearchInput?.addEventListener('input', () => {

@@ -294,3 +294,72 @@ export async function getRelatedProducts({ productId, categoryId, limit = 4 }) {
     return { data: [], error }
   }
 }
+
+export async function getAverageRatingsByProductIds(productIds = []) {
+  try {
+    if (!Array.isArray(productIds) || !productIds.length) {
+      return { data: {}, error: null }
+    }
+
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('product_id, rating')
+      .in('product_id', productIds)
+
+    if (error) throw error
+
+    const totals = {}
+
+    for (const row of data ?? []) {
+      const productId = row.product_id
+      if (!productId) continue
+
+      if (!totals[productId]) {
+        totals[productId] = { sum: 0, count: 0 }
+      }
+
+      totals[productId].sum += Number(row.rating ?? 0)
+      totals[productId].count += 1
+    }
+
+    const averages = {}
+
+    Object.keys(totals).forEach((productId) => {
+      const entry = totals[productId]
+      if (entry.count > 0) {
+        averages[productId] = entry.sum / entry.count
+      }
+    })
+
+    return { data: averages, error: null }
+  } catch (error) {
+    return { data: {}, error }
+  }
+}
+
+export async function getPurchaseCountsByProductIds(productIds = []) {
+  try {
+    if (!Array.isArray(productIds) || !productIds.length) {
+      return { data: {}, error: null }
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('product_id')
+      .in('product_id', productIds)
+
+    if (error) throw error
+
+    const counts = {}
+
+    for (const row of data ?? []) {
+      const productId = row.product_id
+      if (!productId) continue
+      counts[productId] = (counts[productId] ?? 0) + 1
+    }
+
+    return { data: counts, error: null }
+  } catch (error) {
+    return { data: {}, error }
+  }
+}

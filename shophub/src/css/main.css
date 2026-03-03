@@ -176,6 +176,10 @@ main {
   background-color: #fff;
 }
 
+.browse-sort-select {
+  background-color: #fff;
+}
+
 .product-detail-image {
   min-height: 320px;
   max-height: 560px;
