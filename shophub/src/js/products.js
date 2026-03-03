@@ -4,8 +4,8 @@ export async function getLatestProducts(limit = 8) {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, title, description, price, image_url, created_at, categories(name)')
-      .eq('status', 'active')
+      .select('id, title, description, price, quantity, image_url, status, created_at, categories(name)')
+      .in('status', ['active', 'sold'])
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -33,8 +33,8 @@ export async function getActiveProducts({ search = '', categoryId = '' } = {}) {
   try {
     let query = supabase
       .from('products')
-      .select('id, title, description, price, image_url, created_at, category_id')
-      .eq('status', 'active')
+      .select('id, title, description, price, quantity, image_url, status, created_at, category_id')
+      .in('status', ['active', 'sold'])
       .order('created_at', { ascending: false })
 
     if (search) {
@@ -58,7 +58,7 @@ export async function getProductById(productId) {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, seller_id, category_id, title, description, price, image_url, status, created_at')
+      .select('id, seller_id, category_id, title, description, price, quantity, image_url, status, created_at')
       .eq('id', productId)
       .single()
 
@@ -156,7 +156,7 @@ export async function getProductsBySeller(sellerId) {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, title, description, price, image_url, status, created_at')
+      .select('id, title, description, price, quantity, image_url, status, created_at')
       .eq('seller_id', sellerId)
       .neq('status', 'deleted')
       .order('created_at', { ascending: false })
@@ -166,6 +166,25 @@ export async function getProductsBySeller(sellerId) {
     return { data: data ?? [], error: null }
   } catch (error) {
     return { data: [], error }
+  }
+}
+
+export async function markOwnProductAsSold(productId, sellerId) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update({ status: 'sold', quantity: 0 })
+      .eq('id', productId)
+      .eq('seller_id', sellerId)
+      .neq('status', 'deleted')
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
   }
 }
 

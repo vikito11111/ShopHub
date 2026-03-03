@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js'
-import { deleteOwnProduct, getProductsBySeller } from './products.js'
+import { deleteOwnProduct, getProductsBySeller, markOwnProductAsSold } from './products.js'
 import { getProfileByUserId, updateOwnProfileAvatar } from './profiles.js'
 import { uploadAvatarImage } from './storage.js'
 import { formatPrice, truncate } from './utils.js'
@@ -70,6 +70,7 @@ function escapeHtml(value) {
 
 function cardTemplate(product) {
   const image = product.image_url || 'https://placehold.co/800x600?text=ShopHub+Product'
+  const canMarkSold = product.status === 'active'
   return `
     <div class="col-12 col-md-6 col-lg-4">
       <article class="card h-100 border-0 shadow-sm home-product-card profile-product-card">
@@ -81,9 +82,15 @@ function cardTemplate(product) {
           </div>
           <p class="text-muted small mb-3">${escapeHtml(truncate(product.description || 'No description provided.', 100))}</p>
           <div class="mt-auto">
+            <p class="small text-secondary mb-2"><i class="bi bi-box-seam me-1"></i>Quantity: ${escapeHtml(product.quantity ?? 0)}</p>
             <p class="fw-semibold mb-3"><i class="bi bi-tag-fill me-1 text-primary"></i>${formatPrice(product.price)}</p>
             <div class="d-flex gap-2">
               <a href="./sell.html?id=${encodeURIComponent(product.id)}" class="btn btn-sm btn-outline-primary">Edit</a>
+              ${
+                canMarkSold
+                  ? `<button type="button" class="btn btn-sm btn-outline-warning js-mark-sold" data-product-id="${escapeHtml(product.id)}">Mark as Sold</button>`
+                  : ''
+              }
               <button type="button" class="btn btn-sm btn-outline-danger js-delete-product" data-product-id="${escapeHtml(product.id)}">Delete</button>
             </div>
           </div>
@@ -289,6 +296,26 @@ function bindDeleteEvents() {
   })
 }
 
+function bindMarkSoldEvents() {
+  productsGrid.querySelectorAll('.js-mark-sold').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const productId = button.getAttribute('data-product-id')
+      if (!productId) return
+
+      const { error } = await markOwnProductAsSold(productId, currentUser.id)
+      if (error) {
+        showAlert('danger', 'Could not mark listing as sold. Please try again.')
+        return
+      }
+
+      showAlert('success', 'Listing marked as sold.')
+      await loadProducts()
+      bindDeleteEvents()
+      bindMarkSoldEvents()
+    })
+  })
+}
+
 function bindAvatarUpload() {
   avatarButton.addEventListener('click', async () => {
     const file = avatarInput.files?.[0]
@@ -333,5 +360,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadProfile()
   await Promise.all([loadProducts(), loadSalesHistory(), loadPurchaseHistory()])
   bindDeleteEvents()
+  bindMarkSoldEvents()
   bindAvatarUpload()
 })

@@ -12,6 +12,7 @@ const titleInput = document.getElementById('sell-title')
 const descriptionInput = document.getElementById('sell-description')
 const priceInput = document.getElementById('sell-price')
 const categoryInput = document.getElementById('sell-category')
+const quantityInput = document.getElementById('sell-quantity')
 const imageInput = document.getElementById('sell-image')
 const imagePreviewWrap = document.getElementById('sell-image-preview-wrap')
 const imagePreview = document.getElementById('sell-image-preview')
@@ -96,6 +97,7 @@ async function loadEditModeData() {
   descriptionInput.value = product.description || ''
   priceInput.value = product.price ?? ''
   categoryInput.value = product.category_id ? String(product.category_id) : ''
+  quantityInput.value = product.quantity ? String(product.quantity) : '1'
 
   existingImageUrl = product.image_url || ''
   if (existingImageUrl) {
@@ -139,8 +141,16 @@ async function handleSubmit(event) {
   const description = descriptionInput.value.trim()
   const price = Number(priceInput.value)
   const categoryId = Number(categoryInput.value)
+  const quantity = Number(quantityInput.value)
 
-  if (!title || !Number.isFinite(price) || price <= 0 || !Number.isFinite(categoryId)) {
+  if (
+    !title ||
+    !Number.isFinite(price) ||
+    price <= 0 ||
+    !Number.isFinite(categoryId) ||
+    !Number.isInteger(quantity) ||
+    quantity < 1
+  ) {
     showAlert('danger', 'Please fill in all required fields with valid values.')
     return
   }
@@ -154,6 +164,7 @@ async function handleSubmit(event) {
       title,
       description,
       price,
+      quantity,
       category_id: categoryId,
       image_url: imageUrl,
       status: 'active'

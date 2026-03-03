@@ -81,6 +81,33 @@ main {
   object-fit: cover;
 }
 
+.product-image-wrap {
+  position: relative;
+}
+
+.sold-banner {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background-color: var(--bs-danger);
+  color: var(--bs-white);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+  padding: 0.22rem 0.5rem;
+  border-radius: 0.35rem;
+  z-index: 1;
+}
+
+.sold-card {
+  filter: grayscale(25%);
+  opacity: 0.92;
+}
+
+.low-stock-badge {
+  color: var(--bs-warning-text-emphasis);
+}
+
 .home-product-card {
   border-radius: 1rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -153,6 +180,10 @@ main {
   min-height: 320px;
   max-height: 560px;
   object-fit: cover;
+}
+
+.product-image-zoom {
+  cursor: zoom-in;
 }
 
 .review-star {

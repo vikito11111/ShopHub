@@ -32,7 +32,7 @@
         <article id="product-details-card" class="card border-0 shadow-sm d-none">
           <div class="row g-0">
             <div class="col-12 col-lg-6">
-              <img id="product-image" src="" alt="Product image" class="product-detail-image w-100 h-100" />
+              <img id="product-image" src="" alt="Product image" class="product-detail-image w-100 h-100 product-image-zoom" />
             </div>
             <div class="col-12 col-lg-6">
               <div class="card-body p-4 p-xl-5 d-flex flex-column h-100">
@@ -47,6 +47,11 @@
                   <span id="product-price" class="h4 mb-0"></span>
                 </div>
 
+                <div class="mb-3">
+                  <span class="text-secondary d-block small">Quantity</span>
+                  <span id="product-quantity" class="fw-semibold"></span>
+                </div>
+
                 <div class="mb-4">
                   <span class="text-secondary d-block small">Seller</span>
                   <span id="product-seller" class="fw-semibold"></span>
@@ -56,6 +61,8 @@
                   <button id="buy-now-btn" type="button" class="btn btn-primary d-none">
                     <i class="bi bi-bag-check me-1"></i>Buy Now
                   </button>
+
+                  <span id="sold-message" class="badge text-bg-danger d-none">Sold Out</span>
 
                   <div id="seller-actions" class="d-none d-flex flex-wrap gap-2">
                     <a id="edit-product-btn" href="#" class="btn btn-outline-primary">
@@ -122,6 +129,21 @@
         </section>
       </section>
     </main>
+
+    <div class="modal fade" id="productImageModal" tabindex="-1" aria-labelledby="productImageModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 bg-transparent">
+          <div class="modal-header border-0 pb-0">
+            <h2 id="productImageModalLabel" class="visually-hidden">Full product image</h2>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body pt-0 text-center">
+            <img id="product-image-modal-src" src="" alt="Full product image" class="img-fluid rounded shadow" />
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="footer-root"></div>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

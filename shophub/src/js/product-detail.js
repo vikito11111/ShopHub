@@ -18,12 +18,16 @@ const loadingState = document.getElementById('product-loading')
 const errorState = document.getElementById('product-error')
 const detailsCard = document.getElementById('product-details-card')
 const productImage = document.getElementById('product-image')
+const productImageModal = document.getElementById('productImageModal')
+const productImageModalSrc = document.getElementById('product-image-modal-src')
 const productTitle = document.getElementById('product-title')
 const productAverageRating = document.getElementById('product-average-rating')
 const productDescription = document.getElementById('product-description')
 const productPrice = document.getElementById('product-price')
+const productQuantity = document.getElementById('product-quantity')
 const productSeller = document.getElementById('product-seller')
 const buyNowBtn = document.getElementById('buy-now-btn')
+const soldMessage = document.getElementById('sold-message')
 const sellerActions = document.getElementById('seller-actions')
 const editBtn = document.getElementById('edit-product-btn')
 const deleteBtn = document.getElementById('delete-product-btn')
@@ -44,6 +48,7 @@ const reviewsList = document.getElementById('reviews-list')
 
 let pageProduct = null
 let currentUser = null
+let imageLightbox = null
 
 function showAlert(type, message) {
   productAlert.className = `alert alert-${type}`
@@ -301,20 +306,23 @@ function renderProduct(product, sellerUsername) {
   productTitle.textContent = product.title
   productDescription.textContent = product.description || 'No description provided.'
   productPrice.textContent = formatPrice(product.price)
+  productQuantity.textContent = String(product.quantity ?? 0)
   productSeller.textContent = sellerUsername || 'Unknown seller'
 }
 
 async function setupBuyerActions(currentUser, product) {
   const isSeller = currentUser?.id === product.seller_id
+  const isSoldOut = product.status === 'sold' || Number(product.quantity ?? 0) <= 0
 
   if (editBtn) {
     editBtn.href = `./sell.html?id=${encodeURIComponent(product.id)}`
   }
 
   setVisibility(sellerActions, Boolean(currentUser && isSeller))
-  setVisibility(buyNowBtn, Boolean(currentUser && !isSeller && product.status === 'active'))
+  setVisibility(buyNowBtn, Boolean(currentUser && !isSeller && !isSoldOut))
+  setVisibility(soldMessage, Boolean(!isSeller && isSoldOut))
 
-  if (!buyNowBtn || !currentUser || isSeller || product.status !== 'active') return
+  if (!buyNowBtn || !currentUser || isSeller || isSoldOut) return
 
   buyNowBtn.addEventListener('click', async () => {
     buyNowBtn.disabled = true
@@ -331,7 +339,18 @@ async function setupBuyerActions(currentUser, product) {
     }
 
     showAlert('success', 'Order created successfully!')
-    buyNowBtn.textContent = 'Purchased'
+    const currentQuantity = Number(pageProduct.quantity ?? 0)
+    pageProduct.quantity = Math.max(currentQuantity - 1, 0)
+
+    if (pageProduct.quantity <= 0) {
+      pageProduct.status = 'sold'
+      setVisibility(buyNowBtn, false)
+      setVisibility(soldMessage, true)
+    } else {
+      buyNowBtn.disabled = false
+    }
+
+    productQuantity.textContent = String(pageProduct.quantity)
   })
 }
 
@@ -382,7 +401,21 @@ async function initializeProductPage() {
   setVisibility(detailsCard, true)
 }
 
+function bindImageLightbox() {
+  if (!productImage || !productImageModal || !productImageModalSrc || !window.bootstrap) return
+
+  imageLightbox = imageLightbox || new window.bootstrap.Modal(productImageModal)
+
+  productImage.addEventListener('click', () => {
+    if (!productImage.src) return
+    productImageModalSrc.src = productImage.src
+    productImageModalSrc.alt = productImage.alt || 'Full product image'
+    imageLightbox.show()
+  })
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+  bindImageLightbox()
   bindReviewStars()
   bindReviewSubmit()
   setSelectedRating(0)
