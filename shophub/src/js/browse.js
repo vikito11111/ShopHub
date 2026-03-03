@@ -4,7 +4,7 @@ import {
   getCategories,
   getPurchaseCountsByProductIds
 } from './products.js'
-import { formatPrice, truncate } from './utils.js'
+import { formatPrice, initBackToTopButton, truncate } from './utils.js'
 
 const searchParams = new URLSearchParams(window.location.search)
 
@@ -283,6 +283,7 @@ function initializeFilters() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initBackToTopButton()
   initializeFilters()
   await loadCategories()
   await loadProducts()

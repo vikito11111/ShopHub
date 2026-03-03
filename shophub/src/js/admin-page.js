@@ -7,7 +7,7 @@ import {
   getProfileRole,
   updateUserRole
 } from './admin.js'
-import { formatPrice, showToast } from './utils.js'
+import { formatPrice, initBackToTopButton, showToast } from './utils.js'
 const loadingState = document.getElementById('admin-loading')
 const contentWrap = document.getElementById('admin-content')
 
@@ -200,6 +200,7 @@ async function requireAdminAccess() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initBackToTopButton()
   const allowed = await requireAdminAccess()
   if (!allowed) return
 

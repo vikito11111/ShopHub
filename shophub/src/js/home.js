@@ -1,5 +1,5 @@
 import { getLatestProducts } from './products.js'
-import { formatPrice, truncate } from './utils.js'
+import { formatPrice, initBackToTopButton, truncate } from './utils.js'
 
 const productGrid = document.getElementById('latest-products-grid')
 const loadingState = document.getElementById('latest-products-loading')
@@ -90,6 +90,7 @@ function initSearch() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initBackToTopButton()
   initSearch()
   await loadLatestProducts()
 })

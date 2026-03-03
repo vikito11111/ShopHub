@@ -12,6 +12,39 @@ export function truncate(text, maxLength = 120) {
   return `${text.slice(0, maxLength).trimEnd()}...`
 }
 
+let backToTopInitialized = false
+
+export function initBackToTopButton() {
+  if (backToTopInitialized) return
+  if (!document.body) return
+
+  backToTopInitialized = true
+
+  let button = document.getElementById('global-back-to-top-btn')
+
+  if (!button) {
+    button = document.createElement('button')
+    button.id = 'global-back-to-top-btn'
+    button.type = 'button'
+    button.className = 'btn btn-primary rounded-circle back-to-top-btn'
+    button.setAttribute('aria-label', 'Back to top')
+    button.innerHTML = '<i class="bi bi-arrow-up" aria-hidden="true"></i>'
+    document.body.appendChild(button)
+  }
+
+  const toggleButton = () => {
+    const shouldShow = window.scrollY > 300
+    button.classList.toggle('show', shouldShow)
+  }
+
+  button.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+
+  window.addEventListener('scroll', toggleButton, { passive: true })
+  toggleButton()
+}
+
 function getToastContainer() {
   let container = document.getElementById('global-toast-container')
   if (container) return container

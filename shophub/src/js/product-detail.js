@@ -10,7 +10,7 @@ import {
   hasUserPurchasedProduct,
   hasUserReviewedProduct
 } from './products.js'
-import { formatPrice, showToast, truncate } from './utils.js'
+import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
 const productId = params.get('id')
@@ -453,6 +453,7 @@ function bindImageLightbox() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initBackToTopButton()
   bindImageLightbox()
   bindReviewStars()
   bindReviewSubmit()

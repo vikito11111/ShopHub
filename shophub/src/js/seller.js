@@ -1,5 +1,5 @@
 import { getActiveProductsBySeller, getProfileById } from './products.js'
-import { formatPrice, truncate } from './utils.js'
+import { formatPrice, initBackToTopButton, truncate } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
 const sellerId = params.get('id')
@@ -141,5 +141,6 @@ async function initializeSellerPage() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initBackToTopButton()
   await initializeSellerPage()
 })

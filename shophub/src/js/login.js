@@ -1,5 +1,5 @@
 import { loginWithEmail } from './auth.js'
-import { showToast } from './utils.js'
+import { initBackToTopButton, showToast } from './utils.js'
 
 const form = document.getElementById('login-form')
 const emailInput = document.getElementById('login-email')
@@ -69,5 +69,6 @@ async function handleSubmit(event) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initBackToTopButton()
   form.addEventListener('submit', handleSubmit)
 })

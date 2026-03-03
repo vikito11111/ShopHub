@@ -2,7 +2,7 @@ import { supabase } from './supabase.js'
 import { deleteOwnProduct, getProductsBySeller, markOwnProductAsSold } from './products.js'
 import { getProfileByUserId, updateOwnProfileAvatar } from './profiles.js'
 import { uploadAvatarImage } from './storage.js'
-import { formatPrice, showToast, truncate } from './utils.js'
+import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
 
 const avatarImage = document.getElementById('profile-avatar')
 const usernameLabel = document.getElementById('profile-username')
@@ -346,6 +346,7 @@ function bindAvatarUpload() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initBackToTopButton()
   currentUser = await requireUser()
   if (!currentUser) return
 

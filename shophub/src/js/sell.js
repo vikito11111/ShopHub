@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js'
 import { createProduct, getCategories, getProductById, updateOwnProduct } from './products.js'
 import { uploadProductImage } from './storage.js'
-import { showToast } from './utils.js'
+import { initBackToTopButton, showToast } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
 const editProductId = params.get('id')
@@ -180,6 +180,7 @@ async function handleSubmit(event) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initBackToTopButton()
   currentUser = await requireAuthUser()
   if (!currentUser) return
 
