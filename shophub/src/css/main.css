@@ -50,8 +50,72 @@ main {
   object-fit: cover;
 }
 
+.profile-hero-card {
+  border-radius: 1rem;
+}
+
+.profile-hero-banner {
+  min-height: 170px;
+}
+
+.profile-avatar-frame {
+  margin-top: -88px;
+}
+
+.profile-avatar-frame .profile-avatar {
+  width: 132px;
+  height: 132px;
+}
+
 .profile-avatar-actions .btn {
   min-width: 140px;
+}
+
+.profile-stat-badge {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.profile-product-card {
+  border-radius: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bs-box-shadow) !important;
+}
+
+.profile-history-table th,
+.profile-history-table td {
+  text-align: left;
+}
+
+.profile-history-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.profile-history-table thead th {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--bs-secondary-color);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.profile-history-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.profile-history-table tbody tr:hover {
+  background-color: var(--bs-light-bg-subtle);
+}
+
+.profile-price-badge {
+  font-weight: 600;
+  color: var(--bs-primary-text-emphasis) !important;
+  background-color: var(--bs-primary-bg-subtle) !important;
 }
 
 .admin-stat-card {
@@ -67,6 +131,10 @@ main {
 @media (max-width: 991.98px) {
   .product-detail-image {
     max-height: 360px;
+  }
+
+  .profile-avatar-frame {
+    margin-top: -64px;
   }
 }
 

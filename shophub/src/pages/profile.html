@@ -22,29 +22,61 @@
       <section class="container">
         <div id="profile-alert" class="alert d-none" role="alert"></div>
 
-        <div class="bg-white border shadow-sm rounded-4 p-4 mb-4">
-          <div class="row g-4 align-items-center">
-            <div class="col-12 col-md-auto text-center">
-              <img id="profile-avatar" src="" alt="User avatar" class="profile-avatar rounded-circle border" />
+        <section class="card border-0 shadow-sm overflow-hidden mb-5 profile-hero-card">
+          <div class="profile-hero-banner bg-dark text-white p-4 p-lg-5">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+              <div>
+                <p class="text-white-50 mb-2 small text-uppercase">Seller Profile</p>
+                <h1 class="h2 mb-0">Your ShopHub Dashboard</h1>
+              </div>
+              <a href="./sell.html" class="btn btn-light btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>New Listing
+              </a>
             </div>
-            <div class="col-12 col-md">
-              <h1 id="profile-username" class="h3 mb-2">User</h1>
-              <p class="text-secondary mb-3">Manage your avatar and listings.</p>
-              <div class="input-group profile-avatar-actions">
-                <input id="profile-avatar-input" class="form-control" type="file" accept="image/*" />
-                <button id="profile-avatar-btn" type="button" class="btn btn-primary text-nowrap">
-                  <span id="profile-avatar-spinner" class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span>
-                  Update Avatar
-                </button>
+          </div>
+
+          <div class="card-body p-4 p-lg-5 pt-lg-4">
+            <div class="row g-4 align-items-end">
+              <div class="col-12 col-lg-auto text-center text-lg-start">
+                <div class="profile-avatar-frame mx-auto mx-lg-0">
+                  <img id="profile-avatar" src="" alt="User avatar" class="profile-avatar rounded-circle border border-4 border-white shadow" />
+                </div>
+              </div>
+
+              <div class="col-12 col-lg">
+                <h2 id="profile-username" class="h3 mb-2">User</h2>
+                <p class="text-secondary mb-3">Manage your avatar and listings.</p>
+                <div class="input-group profile-avatar-actions mb-3">
+                  <input id="profile-avatar-input" class="form-control" type="file" accept="image/*" />
+                  <button id="profile-avatar-btn" type="button" class="btn btn-primary text-nowrap">
+                    <span id="profile-avatar-spinner" class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span>
+                    Update Avatar
+                  </button>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge rounded-pill text-bg-light border px-3 py-2 profile-stat-badge">
+                    <i class="bi bi-grid-3x3-gap-fill me-1"></i>
+                    Listings: <span id="profile-stat-listings" class="ms-1">0</span>
+                  </span>
+                  <span class="badge rounded-pill text-bg-light border px-3 py-2 profile-stat-badge">
+                    <i class="bi bi-bag-check-fill me-1"></i>
+                    Sales: <span id="profile-stat-sales" class="ms-1">0</span>
+                  </span>
+                  <span class="badge rounded-pill text-bg-light border px-3 py-2 profile-stat-badge">
+                    <i class="bi bi-calendar-event me-1"></i>
+                    Member since: <span id="profile-stat-member-since" class="ms-1">—</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <section>
+        <section class="mb-5">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h4 mb-0">My Listings</h2>
-            <a href="./sell.html" class="btn btn-primary btn-sm">
+            <h2 class="h4 mb-0"><i class="bi bi-shop-window me-2"></i>My Listings</h2>
+            <a href="./sell.html" class="btn btn-primary btn-sm d-lg-none">
               <i class="bi bi-plus-lg me-1"></i>New Listing
             </a>
           </div>
@@ -63,6 +95,88 @@
           </div>
 
           <div id="profile-products-grid" class="row g-4"></div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h2 class="h4 mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Sales History</h2>
+            </div>
+
+            <div id="profile-sales-loading" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+              <p class="text-secondary mt-3 mb-0">Loading sales history...</p>
+            </div>
+
+            <div id="profile-sales-error" class="alert alert-danger d-none" role="alert">
+              We could not load your sales history right now.
+            </div>
+
+            <div id="profile-sales-empty" class="alert alert-info d-none" role="alert">
+              No history yet.
+            </div>
+
+            <div id="profile-sales-table-wrap" class="table-responsive d-none">
+              <table class="table table-hover align-middle mb-0 profile-history-table">
+                <colgroup>
+                  <col style="width: 20%" />
+                  <col style="width: 40%" />
+                  <col style="width: 20%" />
+                  <col style="width: 20%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col" class="text-start"><i class="bi bi-person me-1"></i>Buyer</th>
+                    <th scope="col" class="text-start"><i class="bi bi-box-seam me-1"></i>Product</th>
+                    <th scope="col" class="text-start"><i class="bi bi-cash-stack me-1"></i>Price</th>
+                    <th scope="col" class="text-start"><i class="bi bi-calendar3 me-1"></i>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="profile-sales-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h2 class="h4 mb-0"><i class="bi bi-bag-check me-2"></i>Purchase History</h2>
+            </div>
+
+            <div id="profile-purchases-loading" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+              <p class="text-secondary mt-3 mb-0">Loading purchase history...</p>
+            </div>
+
+            <div id="profile-purchases-error" class="alert alert-danger d-none" role="alert">
+              We could not load your purchase history right now.
+            </div>
+
+            <div id="profile-purchases-empty" class="alert alert-info d-none" role="alert">
+              No history yet.
+            </div>
+
+            <div id="profile-purchases-table-wrap" class="table-responsive d-none">
+              <table class="table table-hover align-middle mb-0 profile-history-table">
+                <colgroup>
+                  <col style="width: 20%" />
+                  <col style="width: 40%" />
+                  <col style="width: 20%" />
+                  <col style="width: 20%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col" class="text-start"><i class="bi bi-box-seam me-1"></i>Product</th>
+                    <th scope="col" class="text-start"><i class="bi bi-person-badge me-1"></i>Seller</th>
+                    <th scope="col" class="text-start"><i class="bi bi-cash-stack me-1"></i>Price</th>
+                    <th scope="col" class="text-start"><i class="bi bi-calendar3 me-1"></i>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="profile-purchases-body"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
       </section>
     </main>

@@ -16,6 +16,22 @@ const productsError = document.getElementById('profile-products-error')
 const productsEmpty = document.getElementById('profile-products-empty')
 const productsGrid = document.getElementById('profile-products-grid')
 
+const salesLoading = document.getElementById('profile-sales-loading')
+const salesError = document.getElementById('profile-sales-error')
+const salesEmpty = document.getElementById('profile-sales-empty')
+const salesTableWrap = document.getElementById('profile-sales-table-wrap')
+const salesTableBody = document.getElementById('profile-sales-body')
+
+const purchasesLoading = document.getElementById('profile-purchases-loading')
+const purchasesError = document.getElementById('profile-purchases-error')
+const purchasesEmpty = document.getElementById('profile-purchases-empty')
+const purchasesTableWrap = document.getElementById('profile-purchases-table-wrap')
+const purchasesTableBody = document.getElementById('profile-purchases-body')
+
+const listingsStat = document.getElementById('profile-stat-listings')
+const salesStat = document.getElementById('profile-stat-sales')
+const memberSinceStat = document.getElementById('profile-stat-member-since')
+
 let currentUser = null
 
 function showAlert(type, message) {
@@ -28,6 +44,19 @@ function showAlert(type, message) {
 function setVisible(element, visible) {
   if (!element) return
   element.classList.toggle('d-none', !visible)
+}
+
+function formatDate(value) {
+  if (!value) return '—'
+
+  const dateValue = new Date(value)
+  if (Number.isNaN(dateValue.getTime())) return '—'
+
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(dateValue)
 }
 
 function escapeHtml(value) {
@@ -43,16 +72,16 @@ function cardTemplate(product) {
   const image = product.image_url || 'https://placehold.co/800x600?text=ShopHub+Product'
   return `
     <div class="col-12 col-md-6 col-lg-4">
-      <article class="card h-100 border-0 shadow-sm profile-product-card">
+      <article class="card h-100 border-0 shadow-sm home-product-card profile-product-card">
         <img src="${escapeHtml(image)}" class="card-img-top" alt="${escapeHtml(product.title)}" loading="lazy" />
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-            <h3 class="h6 card-title mb-0">${escapeHtml(product.title)}</h3>
+            <h3 class="h6 card-title mb-0">${escapeHtml(truncate(product.title, 52))}</h3>
             <span class="badge text-bg-secondary">${escapeHtml(product.status)}</span>
           </div>
           <p class="text-muted small mb-3">${escapeHtml(truncate(product.description || 'No description provided.', 100))}</p>
           <div class="mt-auto">
-            <p class="fw-semibold mb-3">${formatPrice(product.price)}</p>
+            <p class="fw-semibold mb-3"><i class="bi bi-tag-fill me-1 text-primary"></i>${formatPrice(product.price)}</p>
             <div class="d-flex gap-2">
               <a href="./sell.html?id=${encodeURIComponent(product.id)}" class="btn btn-sm btn-outline-primary">Edit</a>
               <button type="button" class="btn btn-sm btn-outline-danger js-delete-product" data-product-id="${escapeHtml(product.id)}">Delete</button>
@@ -86,6 +115,7 @@ async function loadProfile() {
 
   usernameLabel.textContent = data.username || 'User'
   avatarImage.src = data.avatar_url || 'https://placehold.co/240x240?text=Avatar'
+  memberSinceStat.textContent = formatDate(data.created_at)
 }
 
 async function loadProducts() {
@@ -100,16 +130,141 @@ async function loadProducts() {
   if (error) {
     setVisible(productsError, true)
     productsGrid.innerHTML = ''
+    listingsStat.textContent = '0'
     return
   }
 
   if (!data.length) {
     setVisible(productsEmpty, true)
     productsGrid.innerHTML = ''
+    listingsStat.textContent = '0'
     return
   }
 
+  listingsStat.textContent = String(data.length)
   productsGrid.innerHTML = data.map(cardTemplate).join('')
+}
+
+function salesRowTemplate(order) {
+  const buyerUsername = order.profiles?.username || 'Unknown buyer'
+  const productTitle = order.products?.title || 'Unknown product'
+  const productPrice = order.products?.price ?? 0
+
+  return `
+    <tr>
+      <td class="text-start">${escapeHtml(buyerUsername)}</td>
+      <td class="text-start">${escapeHtml(productTitle)}</td>
+      <td class="text-start"><span class="badge text-bg-primary-subtle profile-price-badge"><i class="bi bi-cash me-1"></i>${escapeHtml(formatPrice(productPrice))}</span></td>
+      <td class="text-start">${escapeHtml(formatDate(order.created_at))}</td>
+    </tr>
+  `
+}
+
+function purchaseRowTemplate(order) {
+  const productTitle = order.products?.title || 'Unknown product'
+  const productPrice = order.products?.price ?? 0
+  const sellerUsername = order.products?.seller?.username || 'Unknown seller'
+
+  return `
+    <tr>
+      <td class="text-start">${escapeHtml(productTitle)}</td>
+      <td class="text-start">${escapeHtml(sellerUsername)}</td>
+      <td class="text-start"><span class="badge text-bg-primary-subtle profile-price-badge"><i class="bi bi-cash me-1"></i>${escapeHtml(formatPrice(productPrice))}</span></td>
+      <td class="text-start">${escapeHtml(formatDate(order.created_at))}</td>
+    </tr>
+  `
+}
+
+function isValidHistoryOrder(order) {
+  const productTitle = order?.products?.title
+  const productPrice = Number(order?.products?.price)
+
+  if (!productTitle) return false
+  if (!Number.isFinite(productPrice)) return false
+
+  return productPrice > 0
+}
+
+async function loadSalesHistory() {
+  setVisible(salesLoading, true)
+  setVisible(salesError, false)
+  setVisible(salesEmpty, false)
+  setVisible(salesTableWrap, false)
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select(
+      `
+      created_at,
+      profiles!orders_buyer_id_fkey(username),
+      products!orders_product_id_fkey(title, price, seller_id)
+    `
+    )
+    .eq('products.seller_id', currentUser.id)
+    .order('created_at', { ascending: false })
+
+  setVisible(salesLoading, false)
+
+  if (error) {
+    setVisible(salesError, true)
+    salesTableBody.innerHTML = ''
+    salesStat.textContent = '0'
+    return
+  }
+
+  const validSales = (data ?? []).filter(isValidHistoryOrder)
+
+  if (!validSales.length) {
+    setVisible(salesEmpty, true)
+    salesTableBody.innerHTML = ''
+    salesStat.textContent = '0'
+    return
+  }
+
+  salesStat.textContent = String(validSales.length)
+  salesTableBody.innerHTML = validSales.map(salesRowTemplate).join('')
+  setVisible(salesTableWrap, true)
+}
+
+async function loadPurchaseHistory() {
+  setVisible(purchasesLoading, true)
+  setVisible(purchasesError, false)
+  setVisible(purchasesEmpty, false)
+  setVisible(purchasesTableWrap, false)
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select(
+      `
+      created_at,
+      products!orders_product_id_fkey(
+        title,
+        price,
+        seller:profiles!products_seller_id_fkey(username)
+      )
+    `
+    )
+    .eq('buyer_id', currentUser.id)
+    .order('created_at', { ascending: false })
+
+  setVisible(purchasesLoading, false)
+
+  if (error) {
+    setVisible(purchasesError, true)
+    purchasesTableBody.innerHTML = ''
+    return
+  }
+
+  const validPurchases = (data ?? []).filter(isValidHistoryOrder)
+
+  if (!validPurchases.length) {
+    setVisible(purchasesEmpty, true)
+    purchasesTableBody.innerHTML = ''
+    return
+  }
+
+  purchasesTableBody.innerHTML = validPurchases.map(purchaseRowTemplate).join('')
+  setVisible(purchasesTableWrap, true)
 }
 
 function bindDeleteEvents() {
@@ -176,7 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!currentUser) return
 
   await loadProfile()
-  await loadProducts()
+  await Promise.all([loadProducts(), loadSalesHistory(), loadPurchaseHistory()])
   bindDeleteEvents()
   bindAvatarUpload()
 })
