@@ -2,6 +2,43 @@ body {
   background-color: #f8f9fa;
 }
 
+.navbar-enhanced {
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.nav-link-enhanced {
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.7rem !important;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-link-enhanced:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.nav-link-enhanced.active {
+  color: var(--bs-white) !important;
+  background-color: rgba(var(--bs-primary-rgb), 0.35);
+}
+
+.footer-enhanced {
+  background-color: var(--bs-dark);
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  color: var(--bs-white);
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
 main {
   min-height: calc(100vh - 140px);
 }

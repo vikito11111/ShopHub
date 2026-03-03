@@ -35,7 +35,7 @@ function renderNavLinks(navItems) {
   return navItems
     .map((item) => {
       const isActive = currentPage === item.href.replace('./', '')
-      return `<li class="nav-item"><a class="nav-link${isActive ? ' active' : ''}" href="${item.href}"${isActive ? ' aria-current="page"' : ''}>${item.label}</a></li>`
+      return `<li class="nav-item"><a class="nav-link nav-link-enhanced${isActive ? ' active' : ''}" href="${item.href}"${isActive ? ' aria-current="page"' : ''}>${item.label}</a></li>`
     })
     .join('')
 }
@@ -80,9 +80,12 @@ async function renderNavbar() {
 
   root.innerHTML = `
     <header class="sticky-top">
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark navbar-enhanced shadow-sm">
         <div class="container">
-          <a class="navbar-brand fw-semibold" href="./index.html">ShopHub</a>
+          <a class="navbar-brand fw-semibold d-inline-flex align-items-center gap-2" href="./index.html">
+            <i class="bi bi-bag-check-fill"></i>
+            <span>ShopHub</span>
+          </a>
           <button
             class="navbar-toggler"
             type="button"
@@ -95,8 +98,8 @@ async function renderNavbar() {
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="mainNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">${renderNavLinks(navItems)}</ul>
-            <div class="d-flex gap-2">${authLinks}</div>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-lg-1">${renderNavLinks(navItems)}</ul>
+            <div class="d-flex gap-2 flex-column flex-lg-row">${authLinks}</div>
           </div>
         </div>
       </nav>
