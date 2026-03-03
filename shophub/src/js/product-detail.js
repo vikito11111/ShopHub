@@ -1,5 +1,14 @@
 import { supabase } from './supabase.js'
-import { createOrder, deleteOwnProduct, getProductById, getProfileById } from './products.js'
+import {
+  createOrder,
+  createProductReview,
+  deleteOwnProduct,
+  getProductById,
+  getProductReviews,
+  getProfileById,
+  hasUserPurchasedProduct,
+  hasUserReviewedProduct
+} from './products.js'
 import { formatPrice } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
@@ -10,6 +19,7 @@ const errorState = document.getElementById('product-error')
 const detailsCard = document.getElementById('product-details-card')
 const productImage = document.getElementById('product-image')
 const productTitle = document.getElementById('product-title')
+const productAverageRating = document.getElementById('product-average-rating')
 const productDescription = document.getElementById('product-description')
 const productPrice = document.getElementById('product-price')
 const productSeller = document.getElementById('product-seller')
@@ -18,6 +28,22 @@ const sellerActions = document.getElementById('seller-actions')
 const editBtn = document.getElementById('edit-product-btn')
 const deleteBtn = document.getElementById('delete-product-btn')
 const productAlert = document.getElementById('product-alert')
+
+const reviewsSection = document.getElementById('product-reviews-section')
+const reviewFormWrap = document.getElementById('review-form-wrap')
+const reviewForm = document.getElementById('review-form')
+const reviewRatingStars = Array.from(document.querySelectorAll('.review-star'))
+const reviewRatingInput = document.getElementById('review-rating-input')
+const reviewComment = document.getElementById('review-comment')
+const reviewSubmitBtn = document.getElementById('review-submit-btn')
+const reviewSubmitSpinner = document.getElementById('review-submit-spinner')
+const reviewEligibilityMessage = document.getElementById('review-eligibility-message')
+const reviewsLoading = document.getElementById('reviews-loading')
+const reviewsEmpty = document.getElementById('reviews-empty')
+const reviewsList = document.getElementById('reviews-list')
+
+let pageProduct = null
+let currentUser = null
 
 function showAlert(type, message) {
   productAlert.className = `alert alert-${type}`
@@ -32,6 +58,223 @@ function showAlert(type, message) {
 function setVisibility(element, visible) {
   if (!element) return
   element.classList.toggle('d-none', !visible)
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+}
+
+function formatDate(value) {
+  if (!value) return '—'
+
+  const dateValue = new Date(value)
+  if (Number.isNaN(dateValue.getTime())) return '—'
+
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(dateValue)
+}
+
+function renderStars(rating) {
+  const safeRating = Number(rating) || 0
+  let icons = ''
+
+  for (let index = 1; index <= 5; index += 1) {
+    icons += `<i class="bi ${index <= safeRating ? 'bi-star-fill text-warning' : 'bi-star text-secondary'}"></i>`
+  }
+
+  return icons
+}
+
+function setReviewSubmitting(submitting) {
+  if (!reviewSubmitBtn || !reviewSubmitSpinner) return
+
+  reviewSubmitBtn.disabled = submitting
+  reviewSubmitSpinner.classList.toggle('d-none', !submitting)
+}
+
+function setSelectedRating(rating) {
+  const safeRating = Number(rating)
+  if (!reviewRatingInput) return
+
+  reviewRatingInput.value = String(safeRating)
+
+  reviewRatingStars.forEach((button) => {
+    const value = Number(button.getAttribute('data-value'))
+    const isSelected = value <= safeRating
+
+    button.classList.toggle('btn-warning', isSelected)
+    button.classList.toggle('btn-outline-warning', !isSelected)
+  })
+}
+
+function reviewItemTemplate(review) {
+  const username = review.profiles?.username || 'Unknown user'
+  const comment = escapeHtml(review.comment || '').replaceAll('\n', '<br />')
+
+  return `
+    <article class="border rounded-3 p-3 review-card">
+      <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+        <div>
+          <p class="fw-semibold mb-1">${escapeHtml(username)}</p>
+          <div class="d-inline-flex align-items-center gap-1 review-stars">${renderStars(review.rating)}</div>
+        </div>
+        <span class="text-secondary small">${escapeHtml(formatDate(review.created_at))}</span>
+      </div>
+      <p class="mb-0 text-secondary">${comment}</p>
+    </article>
+  `
+}
+
+function renderAverageRating(reviews) {
+  if (!productAverageRating) return
+
+  if (!reviews.length) {
+    setVisibility(productAverageRating, false)
+    return
+  }
+
+  const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0)
+  const average = totalRating / reviews.length
+  const averageText = average.toFixed(1)
+
+  productAverageRating.innerHTML = `<i class="bi bi-star-fill text-warning me-1"></i>${averageText} (${reviews.length})`
+  setVisibility(productAverageRating, true)
+}
+
+async function loadAndRenderReviews() {
+  if (!pageProduct) return
+
+  setVisibility(reviewsLoading, true)
+  setVisibility(reviewsEmpty, false)
+  reviewsList.innerHTML = ''
+
+  const { data, error } = await getProductReviews(pageProduct.id)
+
+  setVisibility(reviewsLoading, false)
+
+  if (error) {
+    showAlert('danger', 'Could not load reviews right now.')
+    renderAverageRating([])
+    return
+  }
+
+  renderAverageRating(data)
+
+  if (!data.length) {
+    setVisibility(reviewsEmpty, true)
+    return
+  }
+
+  reviewsList.innerHTML = data.map(reviewItemTemplate).join('')
+}
+
+async function setupReviewEligibility() {
+  if (!pageProduct) return
+
+  setVisibility(reviewsSection, true)
+  setVisibility(reviewFormWrap, false)
+  setVisibility(reviewEligibilityMessage, false)
+
+  if (!currentUser) {
+    reviewEligibilityMessage.textContent = 'Log in and purchase this product to leave a review.'
+    setVisibility(reviewEligibilityMessage, true)
+    return
+  }
+
+  if (currentUser.id === pageProduct.seller_id) {
+    reviewEligibilityMessage.textContent = 'Sellers cannot review their own product.'
+    setVisibility(reviewEligibilityMessage, true)
+    return
+  }
+
+  const [{ data: hasPurchased, error: purchaseError }, { data: hasReviewed, error: reviewError }] =
+    await Promise.all([
+      hasUserPurchasedProduct(currentUser.id, pageProduct.id),
+      hasUserReviewedProduct(currentUser.id, pageProduct.id)
+    ])
+
+  if (purchaseError || reviewError) {
+    reviewEligibilityMessage.textContent = 'Could not verify review eligibility right now.'
+    setVisibility(reviewEligibilityMessage, true)
+    return
+  }
+
+  if (!hasPurchased) {
+    reviewEligibilityMessage.textContent = 'You can leave a review after purchasing this product.'
+    setVisibility(reviewEligibilityMessage, true)
+    return
+  }
+
+  if (hasReviewed) {
+    reviewEligibilityMessage.textContent = 'You have already reviewed this product.'
+    setVisibility(reviewEligibilityMessage, true)
+    return
+  }
+
+  setVisibility(reviewFormWrap, true)
+}
+
+function bindReviewStars() {
+  reviewRatingStars.forEach((button) => {
+    button.addEventListener('click', () => {
+      const rating = Number(button.getAttribute('data-value'))
+      if (!Number.isFinite(rating)) return
+      setSelectedRating(rating)
+    })
+  })
+}
+
+function bindReviewSubmit() {
+  if (!reviewForm) return
+
+  reviewForm.addEventListener('submit', async (event) => {
+    event.preventDefault()
+
+    if (!pageProduct || !currentUser) return
+
+    const rating = Number(reviewRatingInput?.value || 0)
+    const comment = reviewComment?.value.trim() || ''
+
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      showAlert('warning', 'Please choose a rating from 1 to 5 stars.')
+      return
+    }
+
+    if (!comment) {
+      showAlert('warning', 'Please enter a review comment.')
+      return
+    }
+
+    setReviewSubmitting(true)
+
+    const { error } = await createProductReview({
+      productId: pageProduct.id,
+      reviewerId: currentUser.id,
+      rating,
+      comment
+    })
+
+    setReviewSubmitting(false)
+
+    if (error) {
+      showAlert('danger', 'Could not submit review. You may have already reviewed this product.')
+      return
+    }
+
+    showAlert('success', 'Review submitted successfully.')
+    reviewForm.reset()
+    setSelectedRating(0)
+
+    await Promise.all([loadAndRenderReviews(), setupReviewEligibility()])
+  })
 }
 
 function showError(message) {
@@ -121,14 +364,18 @@ async function initializeProductPage() {
     return
   }
 
-  const [{ data: seller }, currentUser] = await Promise.all([
+  const [{ data: seller }, user] = await Promise.all([
     getProfileById(product.seller_id),
     getCurrentUser()
   ])
 
+  pageProduct = product
+  currentUser = user
+
   renderProduct(product, seller?.username)
   await setupBuyerActions(currentUser, product)
   await setupSellerActions(currentUser, product)
+  await Promise.all([loadAndRenderReviews(), setupReviewEligibility()])
 
   setVisibility(loadingState, false)
   setVisibility(errorState, false)
@@ -136,5 +383,8 @@ async function initializeProductPage() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  bindReviewStars()
+  bindReviewSubmit()
+  setSelectedRating(0)
   await initializeProductPage()
 })

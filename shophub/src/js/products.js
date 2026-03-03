@@ -168,3 +168,74 @@ export async function getProductsBySeller(sellerId) {
     return { data: [], error }
   }
 }
+
+export async function hasUserPurchasedProduct(userId, productId) {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('buyer_id', userId)
+      .eq('product_id', productId)
+      .limit(1)
+
+    if (error) throw error
+
+    return { data: Boolean(data?.length), error: null }
+  } catch (error) {
+    return { data: false, error }
+  }
+}
+
+export async function hasUserReviewedProduct(userId, productId) {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('reviewer_id', userId)
+      .eq('product_id', productId)
+      .limit(1)
+
+    if (error) throw error
+
+    return { data: Boolean(data?.length), error: null }
+  } catch (error) {
+    return { data: false, error }
+  }
+}
+
+export async function getProductReviews(productId) {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('id, rating, comment, created_at, profiles!reviews_reviewer_id_fkey(username)')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return { data: data ?? [], error: null }
+  } catch (error) {
+    return { data: [], error }
+  }
+}
+
+export async function createProductReview({ productId, reviewerId, rating, comment }) {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert({
+        product_id: productId,
+        reviewer_id: reviewerId,
+        rating,
+        comment
+      })
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}

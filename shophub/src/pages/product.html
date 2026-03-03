@@ -36,7 +36,10 @@
             </div>
             <div class="col-12 col-lg-6">
               <div class="card-body p-4 p-xl-5 d-flex flex-column h-100">
-                <h1 id="product-title" class="h3 mb-3"></h1>
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                  <h1 id="product-title" class="h3 mb-0"></h1>
+                  <span id="product-average-rating" class="badge text-bg-light border d-none"></span>
+                </div>
                 <p id="product-description" class="text-secondary mb-4"></p>
 
                 <div class="mb-3">
@@ -67,6 +70,56 @@
             </div>
           </div>
         </article>
+
+        <section id="product-reviews-section" class="mt-4 d-none">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-lg-5">
+              <h2 class="h4 mb-3"><i class="bi bi-chat-square-text me-2"></i>Reviews</h2>
+
+              <div id="review-form-wrap" class="mb-4 d-none">
+                <h3 class="h6 mb-3">Leave a Review</h3>
+                <form id="review-form" class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label d-block mb-2">Your Rating</label>
+                    <div id="review-rating-stars" class="d-flex gap-1" role="radiogroup" aria-label="Rating">
+                      <button type="button" class="btn btn-sm btn-outline-warning review-star" data-value="1" aria-label="1 star"><i class="bi bi-star-fill"></i></button>
+                      <button type="button" class="btn btn-sm btn-outline-warning review-star" data-value="2" aria-label="2 stars"><i class="bi bi-star-fill"></i></button>
+                      <button type="button" class="btn btn-sm btn-outline-warning review-star" data-value="3" aria-label="3 stars"><i class="bi bi-star-fill"></i></button>
+                      <button type="button" class="btn btn-sm btn-outline-warning review-star" data-value="4" aria-label="4 stars"><i class="bi bi-star-fill"></i></button>
+                      <button type="button" class="btn btn-sm btn-outline-warning review-star" data-value="5" aria-label="5 stars"><i class="bi bi-star-fill"></i></button>
+                    </div>
+                    <input id="review-rating-input" type="hidden" value="0" />
+                  </div>
+
+                  <div class="col-12">
+                    <label for="review-comment" class="form-label">Comment</label>
+                    <textarea id="review-comment" class="form-control" rows="4" maxlength="2000" required></textarea>
+                  </div>
+
+                  <div class="col-12 d-flex justify-content-end">
+                    <button id="review-submit-btn" type="submit" class="btn btn-primary">
+                      <span id="review-submit-spinner" class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span>
+                      Submit Review
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div id="review-eligibility-message" class="alert alert-info d-none" role="alert"></div>
+
+              <div id="reviews-loading" class="text-center py-4 d-none">
+                <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                <p class="text-secondary mt-3 mb-0">Loading reviews...</p>
+              </div>
+
+              <div id="reviews-empty" class="alert alert-info d-none" role="alert">
+                No reviews yet.
+              </div>
+
+              <div id="reviews-list" class="d-grid gap-3"></div>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
     <div id="footer-root"></div>
