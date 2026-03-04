@@ -9,6 +9,8 @@ import { getUserWishlist, toggleWishlist } from './wishlist.js'
 import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
 
 const searchParams = new URLSearchParams(window.location.search)
+const PAGE_SIZE = 24
+const MAX_VISIBLE_PAGES = 5
 
 const searchForm = document.getElementById('browse-search-form')
 const searchInput = document.getElementById('browse-search-input')
@@ -21,6 +23,9 @@ const loadingState = document.getElementById('browse-products-loading')
 const emptyState = document.getElementById('browse-products-empty')
 const errorState = document.getElementById('browse-products-error')
 const resultsCount = document.getElementById('browse-results-count')
+const resultsRange = document.getElementById('browse-results-range')
+const paginationWrap = document.getElementById('browse-pagination-wrap')
+const paginationList = document.getElementById('browse-pagination')
 
 let allCategories = []
 let currentProducts = []
@@ -28,6 +33,8 @@ let productAverageRatings = {}
 let productPurchaseCounts = {}
 let currentUser = null
 let wishlistedProductIds = new Set()
+let currentPage = 1
+let totalResults = 0
 
 function escapeHtml(value) {
   return String(value)
@@ -156,6 +163,101 @@ function updateResultsCount(count) {
   resultsCount.textContent = `${count} ${label}`
 }
 
+function getTotalPages() {
+  if (totalResults <= 0) return 1
+  return Math.ceil(totalResults / PAGE_SIZE)
+}
+
+function updateResultsRange(itemsOnPage) {
+  if (!resultsRange) return
+
+  if (totalResults <= 0) {
+    resultsRange.textContent = 'Showing 0 results'
+    setVisibility(resultsRange, true)
+    return
+  }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1
+  const end = start + Math.max(itemsOnPage - 1, 0)
+
+  resultsRange.textContent = `Showing ${start}-${end} of ${totalResults} results`
+  setVisibility(resultsRange, true)
+}
+
+function paginationItemTemplate({ label, page, disabled = false, active = false, ariaLabel = '' }) {
+  const disabledClass = disabled ? ' disabled' : ''
+  const activeClass = active ? ' active' : ''
+  const ariaCurrent = active ? ' aria-current="page"' : ''
+  const dataPage = !disabled && !active ? ` data-page="${page}"` : ''
+  const labelAria = ariaLabel ? ` aria-label="${ariaLabel}"` : ''
+
+  return `
+    <li class="page-item${disabledClass}${activeClass}">
+      <button type="button" class="page-link"${dataPage}${ariaCurrent}${labelAria}>${label}</button>
+    </li>
+  `
+}
+
+function renderPagination() {
+  if (!paginationWrap || !paginationList) return
+
+  if (totalResults <= PAGE_SIZE) {
+    paginationList.innerHTML = ''
+    setVisibility(paginationWrap, false)
+    return
+  }
+
+  const totalPages = getTotalPages()
+  const halfWindow = Math.floor(MAX_VISIBLE_PAGES / 2)
+
+  let startPage = Math.max(1, currentPage - halfWindow)
+  let endPage = Math.min(totalPages, startPage + MAX_VISIBLE_PAGES - 1)
+
+  if (endPage - startPage + 1 < MAX_VISIBLE_PAGES) {
+    startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1)
+  }
+
+  const items = []
+
+  items.push(
+    paginationItemTemplate({
+      label: 'Previous',
+      page: currentPage - 1,
+      disabled: currentPage <= 1,
+      ariaLabel: 'Previous page'
+    })
+  )
+
+  for (let page = startPage; page <= endPage; page += 1) {
+    items.push(
+      paginationItemTemplate({
+        label: String(page),
+        page,
+        active: page === currentPage
+      })
+    )
+  }
+
+  items.push(
+    paginationItemTemplate({
+      label: 'Next',
+      page: currentPage + 1,
+      disabled: currentPage >= totalPages,
+      ariaLabel: 'Next page'
+    })
+  )
+
+  paginationList.innerHTML = items.join('')
+  setVisibility(paginationWrap, true)
+}
+
+function scrollToProductsStart() {
+  const target = resultsRange || productGrid
+  if (!target) return
+
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 function setActiveCategoryPill(categoryId) {
   if (!categoryPills) return
 
@@ -232,12 +334,10 @@ function renderProducts(products) {
   if (!sortedProducts.length) {
     setVisibility(emptyState, true)
     productGrid.innerHTML = ''
-    updateResultsCount(0)
     return
   }
 
   setVisibility(emptyState, false)
-  updateResultsCount(sortedProducts.length)
   productGrid.innerHTML = sortedProducts.map(productCardTemplate).join('')
   bindCardImageFallbacks()
   bindWishlistEvents()
@@ -259,11 +359,12 @@ async function loadWishlistState() {
   wishlistedProductIds = new Set((data ?? []).map((item) => item.product_id))
 }
 
-function updateUrl(search, category, sort) {
+function updateUrl(search, category, sort, page = 1) {
   const params = new URLSearchParams()
   if (search) params.set('search', search)
   if (category) params.set('category', category)
   if (sort && sort !== 'most_recent') params.set('sort', sort)
+  if (page > 1) params.set('page', String(page))
 
   const queryString = params.toString()
   const targetUrl = queryString ? `./browse.html?${queryString}` : './browse.html'
@@ -316,14 +417,18 @@ async function loadCategories() {
 async function loadProducts() {
   const searchValue = searchInput.value.trim()
   const categoryValue = categorySelect.value
+  const sortValue = sortSelect?.value || 'most_recent'
 
   setVisibility(loadingState, true)
   setVisibility(emptyState, false)
   setVisibility(errorState, false)
 
-  const { data, error } = await getActiveProducts({
+  const { data, total, error } = await getActiveProducts({
     search: searchValue,
-    categoryId: categoryValue
+    categoryId: categoryValue,
+    sort: sortValue,
+    page: currentPage,
+    pageSize: PAGE_SIZE
   })
 
   setVisibility(loadingState, false)
@@ -331,20 +436,39 @@ async function loadProducts() {
   if (error) {
     setVisibility(errorState, true)
     currentProducts = []
+    totalResults = 0
     resetSortMetrics()
     productGrid.innerHTML = ''
     updateResultsCount(0)
+    setVisibility(resultsRange, false)
+    setVisibility(paginationWrap, false)
+    return
+  }
+
+  totalResults = Number(total ?? 0)
+  updateResultsCount(totalResults)
+
+  const totalPages = getTotalPages()
+  if (totalResults > 0 && currentPage > totalPages) {
+    currentPage = totalPages
+    updateUrl(searchValue, categoryValue, sortValue, currentPage)
+    await loadProducts()
     return
   }
 
   currentProducts = data ?? []
   await loadSortMetrics(currentProducts)
   renderProducts(currentProducts)
+  updateResultsRange(currentProducts.length)
+  renderPagination()
 }
 
 function initializeFilters() {
   const searchFromUrl = searchParams.get('search') || ''
   const sortFromUrl = searchParams.get('sort') || 'most_recent'
+  const pageFromUrl = Number(searchParams.get('page') || 1)
+
+  currentPage = Number.isFinite(pageFromUrl) && pageFromUrl > 0 ? pageFromUrl : 1
 
   searchInput.value = searchFromUrl
 
@@ -358,7 +482,8 @@ function initializeFilters() {
 
   searchForm.addEventListener('submit', async (event) => {
     event.preventDefault()
-    updateUrl(searchInput.value.trim(), categorySelect.value, sortSelect?.value || 'most_recent')
+    currentPage = 1
+    updateUrl(searchInput.value.trim(), categorySelect.value, sortSelect?.value || 'most_recent', currentPage)
     setActiveCategoryPill(categorySelect.value)
     await loadProducts()
   })
@@ -370,17 +495,35 @@ function initializeFilters() {
     const value = button.getAttribute('data-category') || ''
     categorySelect.value = value
     setActiveCategoryPill(value)
-    updateUrl(searchInput.value.trim(), value, sortSelect?.value || 'most_recent')
+    currentPage = 1
+    updateUrl(searchInput.value.trim(), value, sortSelect?.value || 'most_recent', currentPage)
     await loadProducts()
   })
 
-  sortSelect?.addEventListener('change', () => {
-    updateUrl(searchInput.value.trim(), categorySelect.value, sortSelect.value)
-    renderProducts(currentProducts)
+  sortSelect?.addEventListener('change', async () => {
+    currentPage = 1
+    updateUrl(searchInput.value.trim(), categorySelect.value, sortSelect.value, currentPage)
+    await loadProducts()
   })
 
   categorySearchInput?.addEventListener('input', () => {
     renderCategoryPills(categorySearchInput.value)
+  })
+
+  paginationList?.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-page]')
+    if (!button) return
+
+    const nextPage = Number(button.getAttribute('data-page'))
+    const totalPages = getTotalPages()
+
+    if (!Number.isFinite(nextPage)) return
+    if (nextPage < 1 || nextPage > totalPages || nextPage === currentPage) return
+
+    currentPage = nextPage
+    updateUrl(searchInput.value.trim(), categorySelect.value, sortSelect?.value || 'most_recent', currentPage)
+    await loadProducts()
+    scrollToProductsStart()
   })
 }
 

@@ -29,13 +29,25 @@ export async function getCategories() {
   }
 }
 
-export async function getActiveProducts({ search = '', categoryId = '' } = {}) {
+export async function getActiveProducts({
+  search = '',
+  categoryId = '',
+  sort = 'most_recent',
+  page = 1,
+  pageSize = 24
+} = {}) {
   try {
+    const safePage = Number.isFinite(Number(page)) && Number(page) > 0 ? Number(page) : 1
+    const safePageSize = Number.isFinite(Number(pageSize)) && Number(pageSize) > 0 ? Number(pageSize) : 24
+    const rangeStart = (safePage - 1) * safePageSize
+    const rangeEnd = rangeStart + safePageSize - 1
+
     let query = supabase
       .from('products')
-      .select('id, title, description, price, quantity, image_url, status, created_at, category_id')
+      .select('id, title, description, price, quantity, image_url, status, created_at, category_id', {
+        count: 'exact'
+      })
       .in('status', ['active', 'sold'])
-      .order('created_at', { ascending: false })
 
     if (search) {
       query = query.ilike('title', `%${search}%`)
@@ -45,12 +57,20 @@ export async function getActiveProducts({ search = '', categoryId = '' } = {}) {
       query = query.eq('category_id', Number(categoryId))
     }
 
-    const { data, error } = await query
+    if (sort === 'price_asc') {
+      query = query.order('price', { ascending: true })
+    } else if (sort === 'price_desc') {
+      query = query.order('price', { ascending: false })
+    } else {
+      query = query.order('created_at', { ascending: false })
+    }
+
+    const { data, error, count } = await query.range(rangeStart, rangeEnd)
     if (error) throw error
 
-    return { data: data ?? [], error: null }
+    return { data: data ?? [], total: count ?? 0, error: null }
   } catch (error) {
-    return { data: [], error }
+    return { data: [], total: 0, error }
   }
 }
 
