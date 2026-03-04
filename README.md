@@ -21,8 +21,8 @@ ShopHub is a community-driven marketplace where users can buy and sell pre-loved
 
 | Role | Email | Password |
 |------|-------|----------|
-| Regular user | demoshophub@gmail.com | demo123456 |
-| Admin user | _Add admin email_ | _Add admin password_ |
+| Admin user | demoshophub@gmail.com | demo123456 |
+| Normal user | user1@gmail.com | 123456 |
 
 ---
 
