@@ -12,6 +12,19 @@ export function truncate(text, maxLength = 120) {
   return `${text.slice(0, maxLength).trimEnd()}...`
 }
 
+export function isNewProduct(createdAt) {
+  if (!createdAt) return false
+
+  const createdDate = new Date(createdAt)
+  if (Number.isNaN(createdDate.getTime())) return false
+
+  const now = Date.now()
+  const differenceMs = now - createdDate.getTime()
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000
+
+  return differenceMs >= 0 && differenceMs <= threeDaysMs
+}
+
 let backToTopInitialized = false
 
 export function initBackToTopButton() {

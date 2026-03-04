@@ -1,7 +1,7 @@
 import { getLatestProducts } from './products.js'
 import { supabase } from './supabase.js'
 import { getUserWishlist, toggleWishlist } from './wishlist.js'
-import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
+import { formatPrice, initBackToTopButton, isNewProduct, showToast, truncate } from './utils.js'
 
 const productGrid = document.getElementById('latest-products-grid')
 const loadingState = document.getElementById('latest-products-loading')
@@ -28,6 +28,7 @@ function productCardTemplate(product) {
   const isSoldOut = product.status === 'sold' || quantity <= 0
   const isLowStock = quantity > 0 && quantity <= 5
   const isWishlisted = wishlistedProductIds.has(product.id)
+  const isNew = isNewProduct(product.created_at)
 
   return `
     <div class="col-12 col-md-6 col-lg-3">
@@ -41,17 +42,20 @@ function productCardTemplate(product) {
         >
           <i class="bi ${isWishlisted ? 'bi-heart-fill' : 'bi-heart'}"></i>
         </button>
+        <div class="product-badge-stack">
+          ${isNew ? '<span class="badge text-bg-success">New</span>' : ''}
+          ${isLowStock ? `<span class="badge text-bg-warning low-stock-badge">Only ${quantity} left</span>` : ''}
+          ${isSoldOut ? '<span class="sold-banner">Sold Out</span>' : ''}
+        </div>
         <img
           src="${escapeHtml(imageUrl)}"
           class="card-img-top"
           alt="${escapeHtml(product.title)}"
           loading="lazy"
         />
-          ${isSoldOut ? '<span class="sold-banner">Sold Out</span>' : ''}
         </div>
         <div class="card-body d-flex flex-column">
           <p class="mb-2"><span class="badge rounded-pill text-bg-light border home-category-badge">${escapeHtml(categoryName)}</span></p>
-          ${isLowStock ? `<p class="mb-2"><span class="badge text-bg-warning low-stock-badge">Only ${quantity} left</span></p>` : ''}
           <h3 class="h6 card-title mb-2">${escapeHtml(product.title)}</h3>
           <p class="text-muted small mb-3">${escapeHtml(truncate(product.description || 'No description provided.', 90))}</p>
           <div class="mt-auto d-flex justify-content-between align-items-center">
