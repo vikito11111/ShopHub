@@ -15,7 +15,7 @@ ShopHub is a community-driven marketplace where users can buy and sell pre-loved
 
 ## Live Project URL
 
-> _Add your Netlify URL here_
+> https://shophub-marketplace.netlify.app/src/pages/index.html
 
 ## Sample Credentials
 
