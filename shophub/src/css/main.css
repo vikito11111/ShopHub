@@ -85,6 +85,27 @@ main {
   position: relative;
 }
 
+.wishlist-toggle-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-color: var(--bs-border-color);
+}
+
+.wishlist-toggle-btn i {
+  color: var(--bs-secondary-color);
+}
+
+.wishlist-toggle-btn.is-active i {
+  color: var(--bs-danger);
+}
+
 .sold-banner {
   position: absolute;
   top: 0.75rem;

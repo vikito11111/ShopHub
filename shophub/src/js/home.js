@@ -1,5 +1,7 @@
 import { getLatestProducts } from './products.js'
-import { formatPrice, initBackToTopButton, truncate } from './utils.js'
+import { supabase } from './supabase.js'
+import { getUserWishlist, toggleWishlist } from './wishlist.js'
+import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
 
 const productGrid = document.getElementById('latest-products-grid')
 const loadingState = document.getElementById('latest-products-loading')
@@ -7,6 +9,8 @@ const emptyState = document.getElementById('latest-products-empty')
 const errorState = document.getElementById('latest-products-error')
 const searchForm = document.getElementById('home-search-form')
 const searchInput = document.getElementById('home-search-input')
+let currentUser = null
+let wishlistedProductIds = new Set()
 
 function escapeHtml(value) {
   return String(value)
@@ -23,11 +27,20 @@ function productCardTemplate(product) {
   const quantity = Number(product.quantity ?? 0)
   const isSoldOut = product.status === 'sold' || quantity <= 0
   const isLowStock = quantity > 0 && quantity <= 5
+  const isWishlisted = wishlistedProductIds.has(product.id)
 
   return `
     <div class="col-12 col-md-6 col-lg-3">
       <article class="card h-100 border-0 shadow-sm home-product-card ${isSoldOut ? 'sold-card' : ''}">
         <div class="product-image-wrap">
+        <button
+          type="button"
+          class="btn btn-light btn-sm rounded-circle wishlist-toggle-btn ${isWishlisted ? 'is-active' : ''}"
+          data-product-id="${escapeHtml(product.id)}"
+          aria-label="${isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}"
+        >
+          <i class="bi ${isWishlisted ? 'bi-heart-fill' : 'bi-heart'}"></i>
+        </button>
         <img
           src="${escapeHtml(imageUrl)}"
           class="card-img-top"
@@ -56,7 +69,72 @@ function setVisibility(element, visible) {
   element.classList.toggle('d-none', !visible)
 }
 
+function renderWishlistButtonState(button, wishlisted) {
+  const icon = button.querySelector('i')
+  if (!icon) return
+
+  button.classList.toggle('is-active', wishlisted)
+  button.setAttribute('aria-label', wishlisted ? 'Remove from wishlist' : 'Save to wishlist')
+  icon.className = `bi ${wishlisted ? 'bi-heart-fill' : 'bi-heart'}`
+}
+
+function bindWishlistEvents() {
+  productGrid.querySelectorAll('.wishlist-toggle-btn').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const productId = button.getAttribute('data-product-id')
+      if (!productId) return
+
+      if (!currentUser) {
+        window.location.href = './login.html'
+        return
+      }
+
+      button.disabled = true
+
+      const { data, error, requiresAuth } = await toggleWishlist(productId)
+
+      if (requiresAuth) {
+        window.location.href = './login.html'
+        return
+      }
+
+      if (error || !data) {
+        button.disabled = false
+        showToast('Could not update wishlist right now.', 'error')
+        return
+      }
+
+      if (data.wishlisted) {
+        wishlistedProductIds.add(productId)
+      } else {
+        wishlistedProductIds.delete(productId)
+      }
+
+      renderWishlistButtonState(button, data.wishlisted)
+      button.disabled = false
+    })
+  })
+}
+
+async function loadWishlistState() {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+
+  currentUser = user ?? null
+
+  if (!currentUser) {
+    wishlistedProductIds = new Set()
+    return
+  }
+
+  const { data } = await getUserWishlist()
+  wishlistedProductIds = new Set((data ?? []).map((item) => item.product_id))
+}
+
 async function loadLatestProducts() {
+  await loadWishlistState()
+
   setVisibility(loadingState, true)
   setVisibility(emptyState, false)
   setVisibility(errorState, false)
@@ -76,6 +154,7 @@ async function loadLatestProducts() {
   }
 
   productGrid.innerHTML = data.map(productCardTemplate).join('')
+  bindWishlistEvents()
 }
 
 function initSearch() {

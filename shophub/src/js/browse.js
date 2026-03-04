@@ -4,7 +4,9 @@ import {
   getCategories,
   getPurchaseCountsByProductIds
 } from './products.js'
-import { formatPrice, initBackToTopButton, truncate } from './utils.js'
+import { supabase } from './supabase.js'
+import { getUserWishlist, toggleWishlist } from './wishlist.js'
+import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
 
 const searchParams = new URLSearchParams(window.location.search)
 
@@ -24,6 +26,8 @@ let allCategories = []
 let currentProducts = []
 let productAverageRatings = {}
 let productPurchaseCounts = {}
+let currentUser = null
+let wishlistedProductIds = new Set()
 
 function escapeHtml(value) {
   return String(value)
@@ -44,11 +48,20 @@ function productCardTemplate(product) {
   const quantity = Number(product.quantity ?? 0)
   const isSoldOut = product.status === 'sold' || quantity <= 0
   const isLowStock = quantity > 0 && quantity <= 5
+  const isWishlisted = wishlistedProductIds.has(product.id)
 
   return `
     <div class="col-12 col-md-6 col-lg-4">
       <article class="card h-100 border-0 shadow-sm browse-product-card ${isSoldOut ? 'sold-card' : ''}">
         <div class="product-image-wrap">
+          <button
+            type="button"
+            class="btn btn-light btn-sm rounded-circle wishlist-toggle-btn ${isWishlisted ? 'is-active' : ''}"
+            data-product-id="${escapeHtml(product.id)}"
+            aria-label="${isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}"
+          >
+            <i class="bi ${isWishlisted ? 'bi-heart-fill' : 'bi-heart'}"></i>
+          </button>
           <img src="${escapeHtml(imageUrl)}" class="card-img-top browse-product-image" alt="${escapeHtml(product.title)}" loading="lazy" />
           ${isSoldOut ? '<span class="sold-banner">Sold Out</span>' : ''}
         </div>
@@ -87,6 +100,53 @@ function bindCardImageFallbacks() {
       },
       { once: true }
     )
+  })
+}
+
+function renderWishlistButtonState(button, wishlisted) {
+  const icon = button.querySelector('i')
+  if (!icon) return
+
+  button.classList.toggle('is-active', wishlisted)
+  button.setAttribute('aria-label', wishlisted ? 'Remove from wishlist' : 'Save to wishlist')
+  icon.className = `bi ${wishlisted ? 'bi-heart-fill' : 'bi-heart'}`
+}
+
+function bindWishlistEvents() {
+  productGrid.querySelectorAll('.wishlist-toggle-btn').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const productId = button.getAttribute('data-product-id')
+      if (!productId) return
+
+      if (!currentUser) {
+        window.location.href = './login.html'
+        return
+      }
+
+      button.disabled = true
+
+      const { data, error, requiresAuth } = await toggleWishlist(productId)
+
+      if (requiresAuth) {
+        window.location.href = './login.html'
+        return
+      }
+
+      if (error || !data) {
+        button.disabled = false
+        showToast('Could not update wishlist right now.', 'error')
+        return
+      }
+
+      if (data.wishlisted) {
+        wishlistedProductIds.add(productId)
+      } else {
+        wishlistedProductIds.delete(productId)
+      }
+
+      renderWishlistButtonState(button, data.wishlisted)
+      button.disabled = false
+    })
   })
 }
 
@@ -180,6 +240,23 @@ function renderProducts(products) {
   updateResultsCount(sortedProducts.length)
   productGrid.innerHTML = sortedProducts.map(productCardTemplate).join('')
   bindCardImageFallbacks()
+  bindWishlistEvents()
+}
+
+async function loadWishlistState() {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+
+  currentUser = user ?? null
+
+  if (!currentUser) {
+    wishlistedProductIds = new Set()
+    return
+  }
+
+  const { data } = await getUserWishlist()
+  wishlistedProductIds = new Set((data ?? []).map((item) => item.product_id))
 }
 
 function updateUrl(search, category, sort) {
@@ -309,6 +386,7 @@ function initializeFilters() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   initBackToTopButton()
+  await loadWishlistState()
   initializeFilters()
   await loadCategories()
   await loadProducts()

@@ -10,6 +10,7 @@ import {
   hasUserPurchasedProduct,
   hasUserReviewedProduct
 } from './products.js'
+import { isWishlisted, removeFromWishlist, toggleWishlist } from './wishlist.js'
 import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
 
 const params = new URLSearchParams(window.location.search)
@@ -28,6 +29,8 @@ const productPrice = document.getElementById('product-price')
 const productQuantity = document.getElementById('product-quantity')
 const productSeller = document.getElementById('product-seller')
 const buyNowBtn = document.getElementById('buy-now-btn')
+const wishlistToggleBtn = document.getElementById('wishlist-toggle-btn')
+const wishlistToggleLabel = document.getElementById('wishlist-toggle-label')
 const soldMessage = document.getElementById('sold-message')
 const sellerActions = document.getElementById('seller-actions')
 const editBtn = document.getElementById('edit-product-btn')
@@ -348,6 +351,56 @@ function renderProduct(product, seller) {
   productSeller.innerHTML = `<a href="./seller.html?id=${encodeURIComponent(product.seller_id)}" class="fw-semibold link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">${escapeHtml(sellerName)}</a>`
 }
 
+function renderWishlistButtonState(wishlisted) {
+  if (!wishlistToggleBtn || !wishlistToggleLabel) return
+
+  const icon = wishlistToggleBtn.querySelector('i')
+  if (!icon) return
+
+  wishlistToggleBtn.classList.toggle('btn-outline-danger', !wishlisted)
+  wishlistToggleBtn.classList.toggle('btn-danger', wishlisted)
+  wishlistToggleLabel.textContent = wishlisted ? 'Remove from Wishlist' : 'Save to Wishlist'
+  icon.className = `bi ${wishlisted ? 'bi-heart-fill' : 'bi-heart'} me-1`
+}
+
+async function setupWishlistAction(user, product) {
+  if (!wishlistToggleBtn) return
+
+  setVisibility(wishlistToggleBtn, true)
+
+  if (user) {
+    const { data } = await isWishlisted(product.id)
+    renderWishlistButtonState(Boolean(data))
+  } else {
+    renderWishlistButtonState(false)
+  }
+
+  wishlistToggleBtn.addEventListener('click', async () => {
+    if (!user) {
+      window.location.href = './login.html'
+      return
+    }
+
+    wishlistToggleBtn.disabled = true
+
+    const { data, error, requiresAuth } = await toggleWishlist(product.id)
+
+    if (requiresAuth) {
+      window.location.href = './login.html'
+      return
+    }
+
+    if (error || !data) {
+      wishlistToggleBtn.disabled = false
+      showToast('Could not update wishlist right now.', 'error')
+      return
+    }
+
+    renderWishlistButtonState(data.wishlisted)
+    wishlistToggleBtn.disabled = false
+  })
+}
+
 async function setupBuyerActions(currentUser, product) {
   const isSeller = currentUser?.id === product.seller_id
   const isSoldOut = product.status === 'sold' || Number(product.quantity ?? 0) <= 0
@@ -376,7 +429,17 @@ async function setupBuyerActions(currentUser, product) {
       return
     }
 
-    showToast('Order created successfully!', 'success')
+    const { data: wishlistData, error: wishlistError } = await removeFromWishlist(product.id)
+
+    const wasRemovedFromWishlist = Boolean(!wishlistError && wishlistData?.removed)
+
+    if (wasRemovedFromWishlist) {
+      renderWishlistButtonState(false)
+      showToast('Purchase successful! Item removed from your wishlist.', 'success')
+    } else {
+      showToast('Purchase successful!', 'success')
+    }
+
     const currentQuantity = Number(pageProduct.quantity ?? 0)
     pageProduct.quantity = Math.max(currentQuantity - 1, 0)
 
@@ -431,6 +494,7 @@ async function initializeProductPage() {
 
   renderProduct(product, seller)
   await setupBuyerActions(currentUser, product)
+  await setupWishlistAction(currentUser, product)
   await setupSellerActions(currentUser, product)
   await Promise.all([loadAndRenderReviews(), setupReviewEligibility(), loadRelatedProducts()])
 

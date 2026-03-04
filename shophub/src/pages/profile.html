@@ -95,6 +95,28 @@
           <div id="profile-products-grid" class="row g-4"></div>
         </section>
 
+        <section class="mb-5">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0"><i class="bi bi-heart me-2 text-danger"></i>My Wishlist</h2>
+          </div>
+
+          <div id="profile-wishlist-loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+            <p class="text-secondary mt-3 mb-0">Loading your wishlist...</p>
+          </div>
+
+          <div id="profile-wishlist-error" class="alert alert-danger d-none" role="alert">
+            We could not load your wishlist right now.
+          </div>
+
+          <div id="profile-wishlist-empty" class="alert alert-info d-none" role="alert">
+            Your wishlist is empty. Browse products and save your favorites from
+            <a href="./browse.html" class="alert-link">Browse</a>.
+          </div>
+
+          <div id="profile-wishlist-grid" class="row g-4"></div>
+        </section>
+
         <section class="card border-0 shadow-sm mb-4">
           <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between mb-3">

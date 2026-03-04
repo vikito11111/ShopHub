@@ -2,6 +2,7 @@ import { supabase } from './supabase.js'
 import { deleteOwnProduct, getProductsBySeller, markOwnProductAsSold } from './products.js'
 import { getProfileByUserId, updateOwnProfileAvatar } from './profiles.js'
 import { uploadAvatarImage } from './storage.js'
+import { getUserWishlist, toggleWishlist } from './wishlist.js'
 import { formatPrice, initBackToTopButton, showToast, truncate } from './utils.js'
 
 const avatarImage = document.getElementById('profile-avatar')
@@ -14,6 +15,11 @@ const productsLoading = document.getElementById('profile-products-loading')
 const productsError = document.getElementById('profile-products-error')
 const productsEmpty = document.getElementById('profile-products-empty')
 const productsGrid = document.getElementById('profile-products-grid')
+
+const wishlistLoading = document.getElementById('profile-wishlist-loading')
+const wishlistError = document.getElementById('profile-wishlist-error')
+const wishlistEmpty = document.getElementById('profile-wishlist-empty')
+const wishlistGrid = document.getElementById('profile-wishlist-grid')
 
 const salesLoading = document.getElementById('profile-sales-loading')
 const salesError = document.getElementById('profile-sales-error')
@@ -92,6 +98,38 @@ function cardTemplate(product) {
   `
 }
 
+function wishlistCardTemplate(product) {
+  const image = product.image_url || 'https://placehold.co/800x600?text=ShopHub+Product'
+  const quantity = Number(product.quantity ?? 0)
+  const isSoldOut = product.status === 'sold' || quantity <= 0
+
+  return `
+    <div class="col-12 col-md-6 col-lg-3">
+      <article class="card h-100 border-0 shadow-sm home-product-card ${isSoldOut ? 'sold-card' : ''}">
+        <div class="product-image-wrap">
+          <img src="${escapeHtml(image)}" class="card-img-top" alt="${escapeHtml(product.title)}" loading="lazy" />
+          ${isSoldOut ? '<span class="sold-banner">Sold Out</span>' : ''}
+        </div>
+        <div class="card-body d-flex flex-column">
+          <h3 class="h6 card-title mb-2">${escapeHtml(truncate(product.title, 60))}</h3>
+          <p class="text-muted small mb-3">${escapeHtml(truncate(product.description || 'No description provided.', 90))}</p>
+          <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
+            <span class="home-price-chip"><i class="bi bi-tag-fill me-1"></i>${formatPrice(product.price)}</span>
+            <a href="./product.html?id=${encodeURIComponent(product.id)}" class="btn btn-sm btn-outline-primary">View</a>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger mt-3 js-remove-wishlist"
+            data-product-id="${escapeHtml(product.id)}"
+          >
+            <i class="bi bi-heartbreak me-1"></i>Remove
+          </button>
+        </div>
+      </article>
+    </div>
+  `
+}
+
 async function requireUser() {
   const {
     data: { user }
@@ -142,6 +180,32 @@ async function loadProducts() {
 
   listingsStat.textContent = String(data.length)
   productsGrid.innerHTML = data.map(cardTemplate).join('')
+}
+
+async function loadWishlist() {
+  setVisible(wishlistLoading, true)
+  setVisible(wishlistError, false)
+  setVisible(wishlistEmpty, false)
+
+  const { data, error } = await getUserWishlist()
+
+  setVisible(wishlistLoading, false)
+
+  if (error) {
+    setVisible(wishlistError, true)
+    wishlistGrid.innerHTML = ''
+    return
+  }
+
+  const products = (data ?? []).map((item) => item.product).filter(Boolean)
+
+  if (!products.length) {
+    setVisible(wishlistEmpty, true)
+    wishlistGrid.innerHTML = ''
+    return
+  }
+
+  wishlistGrid.innerHTML = products.map(wishlistCardTemplate).join('')
 }
 
 function salesRowTemplate(order) {
@@ -308,6 +372,29 @@ function bindMarkSoldEvents() {
   })
 }
 
+function bindWishlistRemoveEvents() {
+  wishlistGrid.querySelectorAll('.js-remove-wishlist').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const productId = button.getAttribute('data-product-id')
+      if (!productId) return
+
+      button.disabled = true
+
+      const { data, error } = await toggleWishlist(productId)
+
+      if (error || !data || data.wishlisted) {
+        button.disabled = false
+        showToast('Could not remove from wishlist. Please try again.', 'error')
+        return
+      }
+
+      showToast('Removed from wishlist.', 'success')
+      await loadWishlist()
+      bindWishlistRemoveEvents()
+    })
+  })
+}
+
 function bindAvatarUpload() {
   avatarButton.addEventListener('click', async () => {
     const file = avatarInput.files?.[0]
@@ -351,8 +438,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!currentUser) return
 
   await loadProfile()
-  await Promise.all([loadProducts(), loadSalesHistory(), loadPurchaseHistory()])
+  await Promise.all([loadProducts(), loadWishlist(), loadSalesHistory(), loadPurchaseHistory()])
   bindDeleteEvents()
   bindMarkSoldEvents()
+  bindWishlistRemoveEvents()
   bindAvatarUpload()
 })
